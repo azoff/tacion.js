@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<title>SpainJS Example</title>
+	<meta name="description" content="">
+	<meta name="author" content="Jonathan Azoff">
+	<meta name="viewport" content="width=device-width">
+	<script src="libs/yepnope.min.js"></script>
+</head>
+<body>
+    <script>yepnope([{
+        load: [
+            '//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js',
+            '//js.pusher.com/1.11/pusher.min.js',
+        ],
+        complete: function() {
+            if (!window.jQuery) { yepnope('libs/jquery-1.7.2.min.js'); }
+            if (!window.Pusher) { yepnope('libs/pusher-1.11.min.js'); }
+        }  
+    },{
+        load: ['src/tacion.js'],
+        complete: function(){
+            tacion.start('examples/spain.js');
+        }
+    }])</script>
+</body>
+</html>
