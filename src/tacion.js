@@ -1,18 +1,30 @@
-(function(global, Socket, $){
+(function(global, SocketApi, $){
     
-    var session = {};
-    var presentation = { slide: 0, step: 0, slides: [] };
     
     function init(manifest) {
-        presentation.slides = manifest.slides;
-        session.socket = new Socket(manifest.socket);
-        session.channel = session.socket.subscribe(manifest.channel);
-        //session.channel.bind('', function(){});
+        /*var socketApi = new SocketApi(manifest.apiKey);
+        var channel = socketApi.subscribe(manifest.channel);
+        channel.bind('test', function(){
+            console.log(arguments);
+        });
+        setTimeout(function(){
+            
+            $.ajax({
+                url: 'http://127.0.0.1:1337',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    channel: manifest.channel,
+                    event: 'test',
+                    data: 'hello world!'
+                })
+            });
+            
+        }, 2000)*/
     }
     
     global.tacion = {
         start: function(root) {
-            presentation.root = root;
             $.getJSON(root+'/manifest.json').then(init);
         }
     };

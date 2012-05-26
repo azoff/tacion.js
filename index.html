@@ -11,6 +11,9 @@
 </head>
 <body>
     <script>yepnope([{
+        test: !!window.JSON,
+        nope: 'libs/json3.min.js'
+    },{
         load: [
             '//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js',
             '//js.pusher.com/1.11/pusher.min.js',
