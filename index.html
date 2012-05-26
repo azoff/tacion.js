@@ -6,10 +6,25 @@
 	<title>SpainJS Example</title>
 	<meta name="description" content="">
 	<meta name="author" content="Jonathan Azoff">
-	<meta name="viewport" content="width=device-width">
+	<meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+	<link rel="stylesheet" media="screen"
+	    href="http://code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.css">
 	<script src="libs/yepnope.min.js"></script>
 </head>
 <body>
+    <div data-role="page">
+        <div data-role="header" data-position="fixed">
+    	    <h1></h1>
+    	</div>
+    	<div data-role="content"></div>
+    	<div data-role="footer" data-position="fixed">
+    		<h1></h1>
+    	</div>
+    </div>
     <script>yepnope([{
         test: !!window.JSON,
         nope: 'libs/json3.min.js'
@@ -22,6 +37,8 @@
             if (!window.jQuery) { yepnope('libs/jquery-1.7.2.min.js'); }
             if (!window.Pusher) { yepnope('libs/pusher-1.11.min.js'); }
         }  
+    },{
+        load: 'http://code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.js'
     },{
         load: ['src/tacion.js'],
         complete: function(){
