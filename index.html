@@ -16,11 +16,15 @@
 	<script src="libs/yepnope.min.js"></script>
 </head>
 <body>
-    <div data-role="page">
+    <div id="page" data-role="page">
         <div data-role="header" data-position="fixed">
     	    <h1></h1>
+    	    <select id="control-mode" data-role="slider" data-mini="true">
+            	<option value="manual">Manual</option>
+            	<option value="auto">Auto</option>
+            </select>
     	</div>
-    	<div data-role="content"></div>
+    	<div id="content" data-role="content"></div>
     	<div data-role="footer" data-position="fixed">
     		<h1></h1>
     	</div>

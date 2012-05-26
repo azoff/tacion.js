@@ -1,14 +1,27 @@
 (function(global, dom, SocketApi, mobile, $){
-
-    var state = { 
-        pages: {} 
-    };
+    
+    var root, content, folder;
+    var state = {};
+    
+    function render(html, data) {
+        return ;
+    }
+    
+    function setSlide(data) {
+        if (state.slide <= state.slides.length) {
+            var path = state.slides[state.slide];
+            var url = folder + '/' + path;
+            $.get(url).then(function(html) {
+                render(html, data);
+            });
+        }
+    }
 
     function urlstate(href) {
         var url = href ? mobile.path.parseUrl(href) : global.location;
         var hash = url.hash.split('#').pop();
         var pairs = hash.split('&');
-        var args = { page: 0, step: 0 };
+        var args = { slide: 0, step: 0 };
         $.each(pairs, function(i, pair){
             pair = pair.split('=');
             args[pair[0]] = parseInt(pair[1], 10);
@@ -18,28 +31,35 @@
 
     function unsigned(i) {
         return i !== undefined && i > 0;
-    };
+    }
 
-    function change(step, page) {
-        page = unsigned(page) ? page : state.page;
+    function change(step, slide) {        
         step = unsigned(step) ? step : state.step;
-        mobile.changePage('#page='+page+'step='+step);
+        slide = unsigned(slide) ? slide : state.slide;
+        mobile.changePage('#slide='+slide+'step='+step);
     }
 
     function onchange(event, data) {
         var location = data.toPage;
         if ($.type(location) === 'string') {
-            var current = urlstate(location);
-            state.page = current.page;
-            state.step = current.step;
-            console.log(state);
-            /*data.options.dataUrl = (url.hrefNoHash || '/') + selector;                
-            mobile.changePage(page.page(), data.options);*/
+            var current = urlstate(location);                  
             event.preventDefault();
+            if (current.slide !== state.slide) {
+                setSlide(current.slide, data);
+            } else if (current.step !== state.step) {
+                setStep(current.step, data);
+            }
         }
     }
     
     function init(manifest) {
+        var root = $(dom);        
+        var current = urlstate();
+        page = root.find('#page');
+        content = page.find('#content');
+        state.slides = manifest.slides;
+        root.on('pagebeforechange', onchange);
+        change(current.step, current.slide);
         /*var socketApi = new SocketApi(manifest.apiKey);
         var channel = socketApi.subscribe(manifest.channel);
         channel.bind('test', function(){
@@ -59,15 +79,12 @@
             });
             
         }, 2000)*/
-        var current = urlstate();
-        state.slides = manifest.slides;
-        $(dom).on('pagebeforechange', onchange);
-        change(current.page, current.step);
     }
     
     global.tacion = {
-        start: function(root) {
-            $.getJSON(root+'/manifest.json').then(init);
+        start: function(presentation) {
+            folder = presentation;
+            $.getJSON(folder+'/manifest.json').then(init);
         }
     };
     
