@@ -19,7 +19,7 @@
         var title = slide.find('title').html();
         var article = slide.find('article');
         var assets = slide.find('link[href],script[src]').remove();
-        var done = function(){ job.resolve(article); }
+        var done = function(){ job.resolve(article); };
         var urls = $.makeArray(assets.map(function(){
             // don't process URLs we've already downloaded
             var asset = $(this);
@@ -75,6 +75,15 @@
         }
     }
     
+    function options(data) {
+        var opts = data.options;
+        opts.allowSamePageTransition = true;
+        opts.changeHash = true;
+        opts.dataUrl = data.toPage;
+        opts.transition = 'none';
+        return opts;
+    }
+    
     function update(index, step, data) {
         spinner('loading slide');
         getslide(index).then(function(slide){                        
@@ -83,11 +92,11 @@
                 slide.removeClass(hidden);
                 state.slide = index;
                 header.html(slide.data('title'));
-                footer.html((index+1) + ' of ' + state.count)
+                footer.html((index+1) + ' of ' + state.count);
             }
             state.step = step;
             gotostep(step, slide);
-            mobile.changePage(page.page(), data);           
+            mobile.changePage(page.page(), options(data));           
             spinner(false); 
         });
     }
@@ -108,16 +117,52 @@
         return $.type(i) === 'number' && i > 0;
     }
 
-    function change(step, slide) {        
-        step = unsigned(step) ? step : (unsigned(state.step) ? state.step : 0);
-        slide = unsigned(slide) ? slide : (unsigned(state.slide) ? state.slide : 0);
-        mobile.changePage('#slide='+slide+'&step='+step);
+    function change(step, slide, options) {        
+        step = unsigned(step) ? step : 0;
+        slide = unsigned(slide) ? slide : 0;
+        mobile.changePage('#slide='+slide+'&step='+step, options);
     }
 
-    function onchange(event, data) {    
+    function next() {
+        var index = state.slide;
+        var step = state.step;
+        getslide(index).then(function(slide){
+            var nextSlide = index + 1;
+            var maxSlide = state.count;
+            var nextStep = step + 1;
+            var maxStep = parseInt(slide.data('steps') || 1, 10);
+            if (nextStep >= maxStep) {
+                if (nextSlide < maxSlide) {
+                    change(0, nextSlide);
+                }
+            } else {
+                change(nextStep, index);
+            }
+        });
+    }
+
+    function prev() {
+        var index = state.slide;
+        var step = state.step;
+        getslide(index).then(function(slide){
+            var prevSlide = index - 1;
+            var prevStep = step - 1;
+            if (prevStep < 0) {
+                if (prevSlide >= 0) {
+                    change(0, prevSlide, {
+                        reverse: true
+                    });
+                }
+            } else {
+                change(prevStep, index);
+            }
+        });
+    }
+
+    function onchange(event, data) { 
         var location = data.toPage;
-        if ($.type(location) === 'string') {            
-            var current = urlstate(location);                  
+        if ($.type(location) === 'string') {   
+            var current = urlstate(location);                              
             update(current.slide, current.step, data);
             event.preventDefault();
         }
@@ -164,7 +209,9 @@
     // Expose the public API
     global.tacion = {
         start: start,
-        change: change
+        change: change,
+        next: next,
+        prev: prev
     };
     
     
