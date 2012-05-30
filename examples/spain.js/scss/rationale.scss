@@ -2,13 +2,11 @@
 @import 'compass/css3/transition';
 
 #rationale {
-    li { 
+    [data-step] { 
         @include opacity(0);         
-    }
-    &.step-1 .first,
-    &.step-2 .second,
-    &.step-3 .third {
-        @include transition(opacity 500ms);
-        @include opacity(1); 
-    }
+        &.active {
+            @include transition(opacity 500ms);
+            @include opacity(1); 
+        }
+    }    
 }

@@ -15,22 +15,7 @@
 	    href="http://code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.css">
     <link rel="stylesheet" media="screen" href="src/tacion.css">
 	<script src="libs/yepnope.min.js"></script>
-</head>
-<body>
-    <div id="page" data-role="page">
-        <div id="header" data-role="header" data-position="fixed">
-    	    <h1></h1>
-    	    <!--<select id="control-mode" data-role="slider" data-mini="true">
-            	<option value="manual">Manual</option>
-            	<option value="auto">Auto</option>
-            </select>-->
-    	</div>
-    	<div id="content" data-role="content"></div>
-    	<div id="footer" data-role="footer" data-position="fixed">
-    		<h1></h1>
-    	</div>
-    </div>
-    <script>yepnope([{
+	<script>yepnope([{
         test: !!window.JSON,
         nope: 'libs/json3.min.js'
     },{
@@ -43,12 +28,25 @@
             if (!window.Pusher) { yepnope('libs/pusher-1.11.min.js'); }
         }  
     },{
-        load: 'http://code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.js'
+        load: '//code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.js',
+        complete: function() {
+            if (!jQuery.mobile) { yepnope('libs/jquery.mobile-1.1.0.min.js'); }
+        }
     },{
-        load: ['src/tacion.js'],
+        load: 'src/tacion.js',
         complete: function(){
             tacion.start('examples/spain.js');
+            
+            // Enable pusher logging - don't include this in production
+            Pusher.log = function(message) {
+              if (window.console && window.console.log) window.console.log(message);
+            };
+
+            // Flash fallback logging - don't include this in production
+            WEB_SOCKET_DEBUG = true;
+            
         }
     }])</script>
-</body>
+</head>
+<body></body>
 </html>

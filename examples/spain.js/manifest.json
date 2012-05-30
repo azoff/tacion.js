@@ -1,6 +1,6 @@
 {
-    "apiKey": "ff4d7585176a252fe649",
-    "channel": "spain.js",
+    "pusherApiKey": "ff4d7585176a252fe649",
+    "syncChannel": "spain.js",
     "slides": [
         "intro.html",
         "rationale.html"

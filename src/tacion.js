@@ -1,8 +1,7 @@
-(function(global, dom, loader, SocketApi, mobile, $){
+(function(global, dom, loader, Pusher, mobile, $){
     
-    var hidden = 'ui-hidden-accessible';
-    var page, content, header, footer;
-    var urlcache = {}, folder;
+    var events = 'swipeleft swiperight keyup';
+    var urlcache = {}, folder, body;
     var state = { };
     
     function spinner(msgText) {
@@ -14,23 +13,23 @@
     }
     
     function renderslide(html) {
-        var job = $.Deferred();
-        var slide = $(html);
-        var title = slide.find('title').html();
-        var article = slide.find('article');
+        var slide  = $(html);        
+        var job    = $.Deferred();
         var assets = slide.find('link[href],script[src]').remove();
-        var done = function(){ job.resolve(article); };
+        var done = function(){ job.resolve(slide); };
         var urls = $.makeArray(assets.map(function(){
             // don't process URLs we've already downloaded
             var asset = $(this);
             var url = asset.attr('src') || asset.attr('href');
             if (url in urlcache) { return; } 
             else { return folder + '/' + url; }
-        }));   
-        article.addClass(hidden);     
-        article.appendTo(content).data('title', title);
+        }));
+        slide.data('steps', slide.find('[data-step]'))
+            .appendTo(body).page()
+            .find('.footer h1')
+            .text([state.slide+1, state.count].join(' of '));
         if (urls.length) {
-            loader({ load: urls, complete: done() });
+            loader({ load: urls, complete: done });
         } else {
             done();
         }
@@ -59,44 +58,29 @@
     }
     
     function gotostep(step, slide) {
-        var classNames = slide.prop('className') || '';
-        var largestStep = 0, stepLength = step+1, i;
-        // only remove steps that we don't need
-        slide.prop('className', classNames.replace(/step-(\d+)/g, 
-            function(className, stepName){    
-                var currentStep = parseInt(stepName, 10);
-                largestStep = currentStep > largestStep ? currentStep : largestStep;
-                if (currentStep > step) { return ''; } 
-                else { return className; }
-            })
-        );
-        for (i=largestStep; i<stepLength; i++) {
-            slide.addClass('step-' + i);
-        }
+        slide.data('steps').each(function(){
+            var element = $(this);
+            var active = element.data('step') <= step;
+            element.toggleClass('active', active);
+        });
     }
     
-    function options(data) {
-        var opts = data.options;
-        opts.allowSamePageTransition = true;
-        opts.changeHash = true;
-        opts.dataUrl = data.toPage;
-        opts.transition = 'none';
-        return opts;
+    function options(slide, data) {
+        return $.extend({
+            dataUrl: data.toPage,
+            changeHash: true,
+            transition: slide.data('transition') || 'slide'
+        }, data.options || {});
     }
     
     function update(index, step, data) {
         spinner('loading slide');
-        getslide(index).then(function(slide){                        
-            if (state.slide !== index) {                
-                slide.siblings().addClass(hidden);
-                slide.removeClass(hidden);
-                state.slide = index;
-                header.html(slide.data('title'));
-                footer.html((index+1) + ' of ' + state.count);
-            }
-            state.step = step;
+        state.slide = index;
+        state.step = step;
+        getslide(index).then(function(slide){
+            var opts = options(slide, data);
             gotostep(step, slide);
-            mobile.changePage(page.page(), options(data));           
+            mobile.changePage(slide, opts);           
             spinner(false); 
         });
     }
@@ -130,13 +114,16 @@
             var nextSlide = index + 1;
             var maxSlide = state.count;
             var nextStep = step + 1;
-            var maxStep = parseInt(slide.data('steps') || 1, 10);
+            var maxStep = slide.data('steps').size() || 1;
             if (nextStep >= maxStep) {
                 if (nextSlide < maxSlide) {
                     change(0, nextSlide);
                 }
             } else {
-                change(nextStep, index);
+                change(nextStep, index, {
+                    allowSamePageTransition: true,
+                    transition: 'none'
+                });
             }
         });
     }
@@ -154,7 +141,10 @@
                     });
                 }
             } else {
-                change(prevStep, index);
+                change(prevStep, index, {
+                    allowSamePageTransition: true,
+                    transition: 'none'
+                });
             }
         });
     }
@@ -168,19 +158,42 @@
         }
     }
     
+    function controller(event) {
+        if (event.type === 'swipeleft') {
+            return next();
+        } else if (event.type === 'swiperight') {
+            return prev();
+        } else {
+            switch(event.which) {
+                case 37: // left
+                case 38: // up
+                    return prev();
+                case 39: // right
+                case 40: // down
+                case 32: // space
+                case 13: // enter
+                    return next();
+            }
+        }
+    }
+    
+    function toggleController(on) {
+        var method = on ? 'on' : 'off';
+        dom[method](events, controller);
+    }
+    
     function init(manifest) {
-        var root = $(dom);        
         var current = urlstate();
-        page = root.find('#page');
-        content = page.find('#content');
-        header = page.find('#header h1');
-        footer = page.find('#footer h1');
         state.slides = manifest.slides;
         state.count = manifest.slides.length;
-        root.on('pagebeforechange', onchange);
-        change(current.step, current.slide);
-        /*var socketApi = new SocketApi(manifest.apiKey);
-        var channel = socketApi.subscribe(manifest.channel);
+        dom = $(dom).on('pagebeforechange', onchange);
+        body = $(dom.get(0).body);
+        toggleController(true);
+        change(current.step, current.slide, {
+            transition: 'fade'
+        });
+        /*var pusher = new Pusher(manifest.pusherApiKey);
+        var channel = pusher.subscribe(manifest.syncChannel);
         channel.bind('test', function(){
             console.log(arguments);
         });
@@ -201,9 +214,14 @@
     }
     
     function start(presentation) {
-        spinner('loading presentation');
         folder = presentation;
-        $.getJSON(folder+'/manifest.json').then(init);
+        var spin = function(){ spinner('loading presentation'); };
+        var manifest = $.getJSON(folder+'/manifest.json');
+        var ready = $.Deferred().then(spin);
+        $.when(manifest, ready).then(function(args){
+            init(args[0]);
+        });
+        $(ready.resolve);
     }
     
     // Expose the public API
@@ -217,11 +235,3 @@
     
     
 })(window, document, yepnope, Pusher, jQuery.mobile, jQuery);
-
-// Enable pusher logging - don't include this in production
-Pusher.log = function(message) {
-  if (window.console && window.console.log) window.console.log(message);
-};
-
-// Flash fallback logging - don't include this in production
-WEB_SOCKET_DEBUG = true;

@@ -1,7 +1,6 @@
-article, section { display: block; }
-article { color: #444; }
-article h1 { font-size: 2.2em; margin: 0.5em 0; }
-article h2 { font-size: 1.8em; }
-article h3 { font-size: 1.2em; }
-article ul { padding: 0; }
-article li { list-style: none; margin-bottom: 0.5em; }
+.content { color: #444; }
+.content h1 { font-size: 2.2em; margin: 0.5em 0; }
+.content h2 { font-size: 1.8em; }
+.content h3 { font-size: 1.2em; }
+.content ul { padding: 0; }
+.content li { list-style: none; margin-bottom: 0.5em; }
