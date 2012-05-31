@@ -114,16 +114,16 @@
             var nextSlide = index + 1;
             var maxSlide = state.count;
             var nextStep = step + 1;
-            var maxStep = slide.data('steps').size() || 1;
-            if (nextStep >= maxStep) {
-                if (nextSlide < maxSlide) {
-                    change(0, nextSlide);
-                }
-            } else {
+            var steps = slide.data('steps').not('.active');
+            if (steps.size() > 0) {
                 change(nextStep, index, {
                     allowSamePageTransition: true,
                     transition: 'none'
-                });
+                });                
+            } else {
+                if (nextSlide < maxSlide) {
+                    change(0, nextSlide);
+                }
             }
         });
     }

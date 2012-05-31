@@ -4,7 +4,6 @@ A real-time, mobile presentation framework
 
 TODO
 ----
-- Add birds image to slide (plus reference dialog)
 - Make the slides for what you get
   - Runs on phones (phone images and support and reference)
   - It's interactive [mario!](http://www.mariomayhem.com/downloads/sprites/smb1/smb_mario_sheet.png)
@@ -30,5 +29,6 @@ TODO
 - Update talk outline
 - Document code
 - Update README
+- Add license
 - Create github site
 - Upgrade pusher account

@@ -1,0 +1,40 @@
+@import 'compass/css3/transition';
+@import 'compass/css3/opacity';
+
+#reach {
+    [data-step] {
+        @include opacity(0);
+        &.active {
+            @include transition(opacity 500ms);
+            @include opacity(1);
+        }
+    }
+    overflow: hidden;
+    .image {        
+        position: absolute;
+        background: none top left no-repeat scroll transparent;
+        &.active {
+             @include transition(top 1s, bottom 1s);
+        }
+        &.jquery-logo {
+            bottom: -61px;
+            right: 2em;
+            width: 235px;
+            height: 61px;
+            background-image: url('../img/jquery-mobile-logo.png');
+            &.active {
+                bottom: 3em;
+            }
+        }
+        &.mobile-phones {
+            top: -289px;
+            right: 5px;
+            width: 240px;
+            height: 289px;
+            background-image: url('../img/mobile-phones.png');
+            &.active {
+                top: 3em;
+            }
+        }
+    }
+}

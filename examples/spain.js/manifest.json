@@ -3,6 +3,7 @@
     "syncChannel": "spain.js",
     "slides": [
         "intro.html",
-        "rationale.html"
+        "rationale.html",
+        "reach.html"
     ]
 }
