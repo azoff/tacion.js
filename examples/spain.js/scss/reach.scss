@@ -2,13 +2,6 @@
 @import 'compass/css3/opacity';
 
 #reach {
-    [data-step] {
-        @include opacity(0);
-        &.active {
-            @include transition(opacity 500ms);
-            @include opacity(1);
-        }
-    }
     overflow: hidden;
     .image {        
         position: absolute;

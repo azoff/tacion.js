@@ -1,5 +1,5 @@
 #intro { 
-    .content {
+    [data-role=content] {
         h1 { color: #FF9A00; }
     }
 }

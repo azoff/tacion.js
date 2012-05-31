@@ -5,8 +5,6 @@ A real-time, mobile presentation framework
 TODO
 ----
 - Make the slides for what you get
-  - Runs on phones (phone images and support and reference)
-  - It's interactive [mario!](http://www.mariomayhem.com/downloads/sprites/smb1/smb_mario_sheet.png)
   - It is easily theme-able, and...
   - Uses CSS3 (fancy)
   - And, it let's you present in a very unique way... (reveal link)

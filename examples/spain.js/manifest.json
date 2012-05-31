@@ -1,9 +1,11 @@
 {
+    "title": "Tacion for SpainJS",
     "pusherApiKey": "ff4d7585176a252fe649",
     "syncChannel": "spain.js",
     "slides": [
         "intro.html",
         "rationale.html",
-        "reach.html"
+        "reach.html",
+        "interactive.html"
     ]
 }

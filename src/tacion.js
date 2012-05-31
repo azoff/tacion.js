@@ -13,21 +13,22 @@
     }
     
     function renderslide(html) {
-        var slide  = $(html);        
+        var slide  = $(html);            
         var job    = $.Deferred();
-        var assets = slide.find('link[href],script[src]').remove();
-        var done = function(){ job.resolve(slide); };
+        var assets = slide.find('link[href]').remove();
+        var done   = function(){ job.resolve(slide); };
+        var header = $('<div/>').attr({'data-role': 'header', 'data-position': 'fixed'});
+        var footer = $('<div/>').attr({'data-role': 'footer', 'data-position': 'fixed'});
+        var caption = [state.slide + 1, state.count].join(' of ');
         var urls = $.makeArray(assets.map(function(){
             // don't process URLs we've already downloaded
-            var asset = $(this);
-            var url = asset.attr('src') || asset.attr('href');
+            var url = $(this).attr('href');
             if (url in urlcache) { return; } 
             else { return folder + '/' + url; }
         }));
-        slide.data('steps', slide.find('[data-step]'))
-            .appendTo(body).page()
-            .find('.footer h1')
-            .text([state.slide+1, state.count].join(' of '));
+        $('<h1/>').text(state.title).appendTo(header.prependTo(slide));
+        $('<h1/>').text(caption).appendTo(footer.appendTo(slide));
+        slide.data('steps', slide.find('[data-step]')).appendTo(body).page();
         if (urls.length) {
             loader({ load: urls, complete: done });
         } else {
@@ -184,6 +185,7 @@
     
     function init(manifest) {
         var current = urlstate();
+        state.title = manifest.title || 'tacion.js';
         state.slides = manifest.slides;
         state.count = manifest.slides.length;
         dom = $(dom).on('pagebeforechange', onchange);
