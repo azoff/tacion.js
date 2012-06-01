@@ -20,6 +20,8 @@
         var header = $('<div/>').attr({'data-role': 'header', 'data-position': 'fixed'});
         var footer = $('<div/>').attr({'data-role': 'footer', 'data-position': 'fixed'});
         var caption = [state.slide + 1, state.count].join(' of ');
+        var stepper = '[data-step]';
+        var steps = slide.is(stepper) ? slide.find(stepper).andSelf() : slide.find(stepper);
         var urls = $.makeArray(assets.map(function(){
             // don't process URLs we've already downloaded
             var url = $(this).attr('href');
@@ -28,7 +30,7 @@
         }));
         $('<h1/>').text(state.title).appendTo(header.prependTo(slide));
         $('<h1/>').text(caption).appendTo(footer.appendTo(slide));
-        slide.data('steps', slide.find('[data-step]')).appendTo(body).page();
+        slide.data('steps', steps).appendTo(body).page();
         if (urls.length) {
             loader({ load: urls, complete: done });
         } else {

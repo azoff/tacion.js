@@ -1,0 +1,37 @@
+#interactive {
+    .demo {
+        text-align: center;
+        fieldset {
+            margin: 10px auto;
+            display: block;
+            width: 5em;
+        }
+        .megaman {
+            width: 50px;
+            height: 78px;
+            background: url('../img/megaman.png') left top no-repeat scroll transparent;
+            margin: 0 auto;
+            &.frame-1 {
+                background-position: -50px top;
+            }        
+            &.frame-2 {
+                background-position: -100px top;
+            }        
+            &.frame-3 {
+                background-position: -150px top;
+            }        
+            &.frame-4 {
+                background-position: -200px top;
+            }        
+            &.frame-5 {
+                background-position: -250px top;
+            }
+            &.frame-6 {
+                background-position: -300px top;
+            }        
+            &.frame-7 {
+                background-position: -350px top;
+            }        
+        }
+    }
+}

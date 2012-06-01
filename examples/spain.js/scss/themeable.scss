@@ -1,0 +1,38 @@
+@import 'compass/css3/transition';
+
+#themeable {
+     &,[data-role=header],[data-role=footer] {
+         &.active {
+             @include transition(background-color 1s);
+         }
+    }
+    ul {
+        position: relative;
+    }
+     .coat-of-arms {         
+         position: absolute;
+         left: 50%;
+         top: 50%;
+         margin: -42px 0 0 -42px;
+         width: 85px;
+         height: 85px;
+         background: url('../img/spanish-coat-of-arms.png') left top no-repeat scroll transparent;
+         &.active {
+             @include transition(opacity 1s);
+        }
+    }
+     .jquery-themeroller {
+         position: absolute;
+         right: 1em;
+         bottom: 1em;
+         width: 288px;
+         height: 197px;
+         background: url('../img/jquery-themeroller.png') left top no-repeat scroll transparent;
+    }
+     &.active {
+        background-color: #FEFF26 !important;
+        [data-role=header],[data-role=footer] {
+            background-color: #B90A16 !important;
+        }
+     }
+}

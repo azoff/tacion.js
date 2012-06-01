@@ -4,10 +4,11 @@ A real-time, mobile presentation framework
 
 TODO
 ----
-- Make the slides for what you get
-  - It is easily theme-able, and...
-  - Uses CSS3 (fancy)
-  - And, it let's you present in a very unique way... (reveal link)
+- Icing on the cake?
+  - You can now present in a very unique way
+  - To illustrate, please pull out your mobile phones
+  - And navigate to [link]
+  - Last step shows connection count
 - Add logic setting up driver and passenger mode (also tag body)
 - Add tap to toggle passenger mode (with notif)
 - Add counter on websocket page
