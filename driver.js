@@ -23,17 +23,17 @@ if (!api_key || !api_secret) {
 
 function respond(response, status, data, headers) {        
     headers = headers || {};
-    headers['Content-Type'] = 'application/json';
-    response.writeHead(200, headers);
+    headers['Content-Type'] = 'application/json';    
     if (data !== undefined) {
         data = JSON.stringify(data);
         headers['Content-Length'] = data.length;
-        response.end(data);
     }
+    response.writeHead(200, headers);
+    response.end(data);
 }
 
 function cors(request, response) {
-    response.setHeader('Access-Control-Allow-Origin', request.headers.origin);
+    response.setHeader('Access-Control-Allow-Origin', request.headers.origin || '*');
     response.setHeader('Access-Control-Allow-Headers', 'origin, content-type, accept');
     response.setHeader('Access-Control-Max-Age', 7200);    
 }
@@ -45,6 +45,7 @@ function getargs(request, callback) {
 		postdata += chunk;
 	});
 	request.on('end', function(){
+		console.log(postdata);
 		try {
 		    json = JSON.parse(postdata);
 		} catch(e) {
@@ -81,10 +82,10 @@ function handler(request, response) {
     if (request.method === 'POST') {
         post(request, response);
     } else {
-        respond(response, 200, '');
+        respond(response, 200, { api_key: api_key });
     }
 }
 
 http.createServer(handler).listen(PORT, IP);
 
-console.log('Running on ' + IP + ':' + PORT + '...')
+console.log('Running on ' + IP + ':' + PORT + '...');

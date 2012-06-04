@@ -1,11 +1,6 @@
 @import 'compass/css3/transition';
 
 #themeable {
-     &,[data-role=header],[data-role=footer] {
-         &.active {
-             @include transition(background-color 1s);
-         }
-    }
     ul {
         position: relative;
     }
@@ -29,10 +24,14 @@
          height: 197px;
          background: url('../img/jquery-themeroller.png') left top no-repeat scroll transparent;
     }
-     &.active {
-        background-color: #FEFF26 !important;
-        [data-role=header],[data-role=footer] {
-            background-color: #B90A16 !important;
-        }
+}
+
+#themeable-page.active {
+     &, [data-role=header], [data-role=footer] {
+         @include transition(background-color 1s);
+     }     
+     background-color: #FEFF26 !important;
+     [data-role=header], [data-role=footer] {
+         background-color: #B90A16 !important;
      }
 }
