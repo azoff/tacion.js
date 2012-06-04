@@ -4,7 +4,6 @@ A real-time, mobile presentation framework
 
 TODO
 ----
-- Switch driver and client events to SSL
 - Icing on the cake?
   - You can now present in a very unique way
   - To illustrate, please pull out your mobile phones

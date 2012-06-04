@@ -196,7 +196,7 @@
         change(current.step, current.slide, {
             transition: 'fade'
         });
-        /*var pusher = new Pusher(manifest.pusherApiKey);
+        /*var pusher = new Pusher(manifest.pusherApiKey, { encrypted: true });
         var channel = pusher.subscribe(manifest.syncChannel);
         channel.bind('test', function(){
             console.log(arguments);
