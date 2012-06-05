@@ -1,4 +1,4 @@
-Tacion JS
+Tacion.JS
 =========
 A real-time, mobile presentation framework
 
