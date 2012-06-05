@@ -1,12 +1,11 @@
-tacion.js
+Tacion JS
 =========
 A real-time, mobile presentation framework
 
 TODO
 ----
-- Fix height bug on reach slide
-- Set up presence channel
 - Add sync toggle manual mode (with notif)
+- Set up presence channel
 - Add counter on websocket page
 - Demo manual v. sync mode, as well as page differences
 - Use presence channel to fire sync messages
@@ -17,9 +16,13 @@ TODO
   - import rainbow.js
   - start with index.html
 - Create a video backup
-- Test socket fallbacks
+- Add tests
+  - Test socket fallbacks
+  - Post-push travis CI
+- Add errorception tracking
 - Document code
 - Update README
-- Add license
+- Add LICENSE.md
+- Fix link on connect slide
 - Create github site
 - Upgrade pusher account

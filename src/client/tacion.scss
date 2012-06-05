@@ -1,0 +1,16 @@
+@import 'compass/css3/opacity';
+@import 'compass/css3/transition';
+
+.driver .passenger, .passenger .driver { 
+	display: none; color: white;
+}
+
+.step { 
+	&.opacity {
+		@include opacity(0);
+		&.active {
+			@include transition(opacity 500ms);
+			@include opacity(1);
+		}
+	}
+}

@@ -1,0 +1,1 @@
+.driver .passenger,.passenger .driver{display:none;color:white}.step.opacity{filter:progid:DXImageTransform.Microsoft.Alpha(Opacity=0);opacity:0}.step.opacity.active{-webkit-transition:opacity 500ms;-moz-transition:opacity 500ms;-ms-transition:opacity 500ms;-o-transition:opacity 500ms;transition:opacity 500ms;filter:progid:DXImageTransform.Microsoft.Alpha(Opacity=100);opacity:1}

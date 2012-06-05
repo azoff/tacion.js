@@ -1,0 +1,309 @@
+/*global yepnope, Pusher */
+(function(global, dom, loader, Pusher, mobile, $){
+
+	"use strict";
+
+	var folder, body, template;
+	var urlCache = {};
+	var state = {};
+	var callbacksMap = {};
+	var socket = {
+		channels: [],
+		send: $.noop,
+		listen: $.noop
+	};
+
+	function spinner(msgText) {
+		if (msgText) {
+			mobile.showPageLoadingMsg('a', msgText, true);
+		} else {
+			mobile.hidePageLoadingMsg();
+		}
+	}
+
+	function slideNode(html) {
+		var regex = /\{\{([a-z]+)\}\}/g;
+		var onMatch = function(match, key){
+			if (key === 'content') { return html; }
+			else if (key === 'index') { return state.slide+1; }
+			else if (key === 'count') { return state.count; }
+		};
+		return $(template.replace(regex, onMatch));
+	}
+
+	function assetUrl(i, asset) {
+		var url = $(asset).attr('href');
+		if (!urlCache.hasOwnProperty(url)) {
+			urlCache[url] = true;
+			return folder + '/' + url;
+		}
+	}
+
+	function renderSlide(html) {
+		var slide   = slideNode(html);
+		var content = slide.find('[data-role=content]');
+		var job     = $.Deferred();
+		var assets  = slide.find('link[href]').remove();
+		var steps   = slide.find('[data-step]');
+		var pstep   = content.data('page-step');
+		var urls    = $.makeArray(assets.map(assetUrl));
+		var done    = function(){ job.resolve(slide); };
+		slide.attr('id', content.attr('id') + '-page');
+		if (pstep) { steps.push(slide.attr('data-step', pstep).get(0)); }
+		slide.data('steps', steps).appendTo(body).page();
+		if (urls.length) { loader({ load: urls, complete: done }); }
+		else { done(); }
+		return job.promise();
+	}
+
+	function loadSlide(path) {
+		var url = folder + '/' + path;
+		var job = $.Deferred();
+		$.get(url).then(function(html) {
+			renderSlide(html).then(job.resolve);
+		});
+		return job.promise();
+	}
+
+	function getSlide(index) {
+		var job = $.Deferred();
+		var slide = state.slides[index];
+		if ($.type(slide) === 'string') {
+			state.slides[index] =
+				loadSlide(slide).then(job.resolve);
+		} else {
+			slide.then(job.resolve);
+		}
+		return job.promise();
+	}
+
+	function gotoStep(step, slide) {
+		slide.data('steps').each(function(){
+			var element = $(this);
+			var active = element.data('step') <= step;
+			element.toggleClass('active', active);
+		});
+	}
+
+	function options(slide, data) {
+		return $.extend({
+			dataUrl: data.toPage,
+			changeHash: true,
+			transition: slide.data('transition') || 'slide'
+		}, data.options || {});
+	}
+
+	function update(index, step, data) {
+		spinner('loading slide');
+		state.slide = index;
+		state.step = step;
+		syncState();
+		getSlide(index).then(function(slide){
+			var opts = options(slide, data);
+			gotoStep(step, slide);
+			mobile.changePage(slide, opts);
+			spinner(false);
+		});
+	}
+
+	function urlState(href) {
+		var url = href ? mobile.path.parseUrl(href) : global.location;
+		var hash = url.hash.split('#').pop();
+		var pairs = hash.split('&');
+		var args = { slide: 0, step: 0 };
+		$.each(pairs, function(i, pair){
+			pair = pair.split('=');
+			args[pair[0]] = parseInt(pair[1], 10);
+		});
+		return args;
+	}
+
+	function unsigned(i) {
+		return $.type(i) === 'number' && i >= 0;
+	}
+
+	function change(step, slide, options) {
+		step = unsigned(step) ? step : 0;
+		slide = unsigned(slide) ? slide : 0;
+		mobile.changePage('#slide='+slide+'&step='+step, options);
+	}
+
+	function next() {
+		var index = state.slide;
+		var step = state.step;
+		getSlide(index).then(function(slide){
+			var nextSlide = index + 1;
+			var maxSlide = state.count;
+			var nextStep = step + 1;
+			var steps = slide.data('steps').not('.active');
+			if (steps.size() > 0) {
+				change(nextStep, index, {
+					allowSamePageTransition: true,
+					transition: 'none'
+				});
+			} else {
+				if (nextSlide < maxSlide) {
+					change(0, nextSlide);
+				}
+			}
+		});
+	}
+
+	function prev() {
+		var index = state.slide;
+		var step = state.step;
+		getSlide(index).then(function(slide){
+			var prevSlide = index - 1;
+			var prevStep = step - 1;
+			if (prevStep < 0) {
+				if (prevSlide >= 0) {
+					change(0, prevSlide, {
+						reverse: true
+					});
+				}
+			} else {
+				change(prevStep, index, {
+					allowSamePageTransition: true,
+					transition: 'none'
+				});
+			}
+		});
+	}
+
+	function onChange(event, data) {
+		var location = data.toPage;
+		if ($.type(location) === 'string') {
+			var current = urlState(location);
+			update(current.slide, current.step, data);
+			event.preventDefault();
+		}
+	}
+
+	function controller(event) {
+		var target = $(event.target);
+		if (!target.is('.ui-focus, .ui-focus *')) {
+			if (event.type === 'swipeleft') {
+				return next();
+			} else if (event.type === 'swiperight') {
+				return prev();
+			} else {
+				switch(event.which) {
+					case 37: // left
+					case 38: // up
+						return prev();
+					case 39: // right
+					case 40: // down
+					case 32: // space
+					case 13: // enter
+						return next();
+				}
+			}
+		}
+	}
+
+	function toggleController(manual) {
+		state.manual = !!manual;
+		var method = manual ? 'on' : 'off';
+		dom[method]('swipeleft swiperight keyup', controller);
+	}
+
+	function syncState(newState) {
+		if (newState) {
+			change(newState.slide, newState.step, {
+				allowSamePageTransition: true,
+				reverse: newState.slide < state.slide,
+				transition: newState.slide !== state.slide
+			});
+		} else {
+			socket.send('sync', 'state', {
+				slide: state.slide,
+				step: state.step
+			});
+		}
+	}
+
+	function openSocket(manifest) {
+		if (manifest.pusherApiKey) {
+			socket.pusher = new Pusher(manifest.pusherApiKey, {
+				encrypted: true
+			});
+			socket.listen = function(channel, event, callback) {
+				if (!socket.channels.hasOwnProperty(channel)) {
+					socket.channels[channel] = socket.pusher.subscribe(channel);
+				}
+				socket.channels[channel].bind(event, callback);
+			};
+			var passengerMode = function() {
+				body.addClass('passenger');
+				toggleController(false);
+				socket.listen('sync', 'state', syncState);
+			};
+			if (manifest.driverUrl) {
+				$.getJSON(manifest.driverUrl).then(function(data){
+					if (data.api_key === manifest.pusherApiKey) {
+						body.addClass('driver');
+						toggleController(true);
+						socket.send = function(channel, event, data) {
+							return $.ajax({
+								url: manifest.driverUrl,
+								type: 'POST',
+								contentType: 'application/json',
+								data: JSON.stringify({
+									channel: channel,
+									event: event,
+									data: data
+								})
+							});
+						};
+					} else {
+						passengerMode();
+					}
+				}).error(passengerMode);
+			} else {
+				passengerMode();
+			}
+		} else {
+			toggleController(true);
+		}
+	}
+
+	function init(manifest) {
+		var done = function(html) {
+			var current = urlState();
+			template = html || '<div data-role="page">{{content}}</div>';
+			change(current.step, current.slide, { transition: 'fade' });
+		};
+		body = $(dom.body);
+		state.slides = manifest.slides;
+		state.count = manifest.slides.length;
+		dom = $(dom).on('pagebeforechange', onChange);
+		openSocket(manifest);
+		if (manifest.template) {
+			$.get(folder+'/'+manifest.template).then(done);
+		} else {
+			done();
+		}
+	}
+
+	function start(presentation) {
+		folder = presentation;
+		var spin = function(){ spinner('loading presentation'); };
+		var manifest = $.getJSON(folder+'/manifest.json');
+		var ready = $.Deferred().then(spin);
+		$(ready.resolve);
+		$.when(manifest, ready).then(function(args){
+			init(args[0]);
+		});
+	}
+
+	// Expose the public API
+	global.tacion = {
+		start: start,
+		change: change,
+		next: next,
+		prev: prev
+	};
+
+
+
+})(window, document, yepnope, Pusher, jQuery.mobile, jQuery);

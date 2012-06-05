@@ -1,37 +1,34 @@
 @import 'compass/css3/transition';
 
 #themeable {
-    ul {
-        position: relative;
-    }
-     .coat-of-arms {         
-         position: absolute;
-         left: 50%;
-         top: 50%;
-         margin: -42px 0 0 -42px;
-         width: 85px;
-         height: 85px;
-         background: url('../img/spanish-coat-of-arms.png') left top no-repeat scroll transparent;
-         &.active {
-             @include transition(opacity 1s);
-        }
-    }
-     .jquery-themeroller {
-         position: absolute;
-         right: 1em;
-         bottom: 1em;
-         width: 288px;
-         height: 197px;
-         background: url('../img/jquery-themeroller.png') left top no-repeat scroll transparent;
-    }
+	ul {
+		position: relative;
+	}
+	.coat-of-arms {
+		width: 85px;
+		height: 85px;
+		margin: 0 auto;
+		background: url('../img/spanish-coat-of-arms.png') left top no-repeat scroll transparent;
+		&.active {
+			@include transition(opacity 1s);
+		}
+	}
+	 .jquery-themeroller {
+		width: 288px;
+		height: 197px;
+		background: url('../img/jquery-themeroller.png') left top no-repeat scroll transparent;
+	}
 }
 
 #themeable-page.active {
-     &, [data-role=header], [data-role=footer] {
-         @include transition(background-color 1s);
-     }     
-     background-color: #FEFF26 !important;
-     [data-role=header], [data-role=footer] {
-         background-color: #B90A16 !important;
-     }
+	 &, [data-role=header], [data-role=footer] {
+		 @include transition(background-color 1s);
+	 }
+	 background-color: #FEFF26 !important;
+	 [data-role=header] {
+		 background-color: #B90A16 !important;
+	 }
+	 [data-role=footer] {
+		 background-color: #B90A16 !important;
+	 }
 }
