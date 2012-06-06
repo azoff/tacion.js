@@ -4,9 +4,9 @@
 	"use strict";
 
 	var folder, body, template;
+	var syncs = $();
 	var urlCache = {};
 	var state = {};
-	var callbacksMap = {};
 	var socket = {
 		channels: [],
 		send: $.noop,
@@ -31,6 +31,21 @@
 		return $(template.replace(regex, onMatch));
 	}
 
+	function setSyncs(manual) {
+		syncs.val(manual?'manual':'automatic').slider('refresh');
+	}
+
+	function addSync(sync) {
+		sync.each(function(){
+			syncs.push(this);
+		}).change(function(){
+			var sync = $(this);
+			var manual = sync.val() === 'manual';
+			toggleController(manual);
+		});
+		setSyncs(state.manual);
+	}
+
 	function assetUrl(i, asset) {
 		var url = $(asset).attr('href');
 		if (!urlCache.hasOwnProperty(url)) {
@@ -42,15 +57,17 @@
 	function renderSlide(html) {
 		var slide   = slideNode(html);
 		var content = slide.find('[data-role=content]');
+		var sync    = slide.find('.sync');
 		var job     = $.Deferred();
 		var assets  = slide.find('link[href]').remove();
 		var steps   = slide.find('[data-step]');
 		var pstep   = content.data('page-step');
 		var urls    = $.makeArray(assets.map(assetUrl));
 		var done    = function(){ job.resolve(slide); };
-		slide.attr('id', content.attr('id') + '-page');
+		slide.attr('id', content.attr('id')+'-page').data('steps', steps);
 		if (pstep) { steps.push(slide.attr('data-step', pstep).get(0)); }
 		slide.data('steps', steps).appendTo(body).page();
+		if (sync.size()) { addSync(sync); }
 		if (urls.length) { loader({ load: urls, complete: done }); }
 		else { done(); }
 		return job.promise();
@@ -202,7 +219,7 @@
 	}
 
 	function toggleController(manual) {
-		state.manual = !!manual;
+		setSyncs(state.manual = !!manual);
 		var method = manual ? 'on' : 'off';
 		dom[method]('swipeleft swiperight keyup', controller);
 	}
