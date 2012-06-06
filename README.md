@@ -4,7 +4,6 @@ A real-time, mobile presentation framework
 
 TODO
 ----
-- Add sync toggle manual mode (with notif)
 - Set up presence channel
 - Add counter on websocket page
 - Demo manual v. sync mode, as well as page differences
