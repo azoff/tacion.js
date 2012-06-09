@@ -2,9 +2,10 @@
 
 	"use strict";
 
-	var url    = require('url');
-	var http   = require('http');
-	var Pusher = require('node-pusher');
+	var url            = require('url');
+	var http           = require('http');
+	var querystring    = require('querystring');
+	var Pusher         = require('node-pusher');
 
 	var IP = '127.0.0.1';
 	var PORT = 1337;
@@ -30,6 +31,7 @@
 		headers['Content-Type'] = 'application/json';
 		if (data !== undefined) {
 			data = JSON.stringify(data);
+			console.log('RESPONSE', data);
 			headers['Content-Length'] = data.length;
 		}
 		response.writeHead(200, headers);
@@ -49,35 +51,47 @@
 			postdata += chunk;
 		});
 		request.on('end', function(){
-			console.log(postdata);
-			try {
-				json = JSON.parse(postdata);
-			} catch(e) {
-				json = {};
+			if (request.headers['content-type'] === 'application/json') {
+				try {
+					callback(JSON.parse(postdata));
+				} catch(e) {
+					callback({});
+				}
+			} else {
+				try {
+					callback(querystring.parse(postdata));
+				} catch(e) {
+					callback({});
+				}
 			}
-			callback(json);
 		});
 	}
 
 	function post(request, response) {
 		getargs(request, function(args){
-			if (args.channel && args.event && args.data) {
-				pusher.trigger(
-					args.channel, args.event, args.data, args.socket_id,
-					function(error, sent, received) {
-						if (error) {
-							respond(response, 500, { error: error });
-						} else {
-							respond(response, received.statusCode, args);
+			console.log('RESPONSE', args);
+			args.channel = args.channel || args.channel_name; /// ugh... c'mon Pusher...
+			if (args.channel) {
+				if (args.event) {
+					return pusher.trigger(
+						args.channel, args.event, args.data, args.socket_id,
+						function(error, sent, received) {
+							if (error) {
+								respond(response, 500, { error: error });
+							} else {
+								respond(response, received.statusCode, args);
+							}
 						}
-					}
-				);
-			} else {
-				respond(response, 400, {
-					error: 'Missing required arguments',
-					required: ['channel', 'event', 'data']
-				});
+					);
+				} else if(args.socket_id) {
+					var auth = pusher.auth(args.socket_id, args.channel, args.data);
+					return respond(response, 200, auth);
+				}
 			}
+			return respond(response, 400, {
+				error: 'Missing required arguments',
+				required: ['channel', 'event', 'data', 'socket_id (for auth)']
+			});
 		});
 	}
 

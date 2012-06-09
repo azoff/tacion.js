@@ -51,6 +51,8 @@
 		if (!urlCache.hasOwnProperty(url)) {
 			urlCache[url] = true;
 			return folder + '/' + url;
+		} else {
+			return undefined;
 		}
 	}
 
@@ -199,20 +201,18 @@
 	function controller(event) {
 		var target = $(event.target);
 		if (!target.is('.ui-focus, .ui-focus *')) {
-			if (event.type === 'swipeleft') {
-				return next();
-			} else if (event.type === 'swiperight') {
-				return prev();
-			} else {
+			if (event.type === 'swipeleft') { next(); }
+			else if (event.type === 'swiperight') { prev(); }
+			else {
 				switch(event.which) {
 					case 37: // left
 					case 38: // up
-						return prev();
+						prev(); break;
 					case 39: // right
 					case 40: // down
 					case 32: // space
 					case 13: // enter
-						return next();
+						next(); break;
 				}
 			}
 		}
@@ -239,39 +239,57 @@
 		}
 	}
 
+	function socketSender(manifest) {
+		return function(channel, event, data) {
+			return $.ajax({
+				url: manifest.driverUrl,
+				type: 'POST',
+				contentType: 'application/json',
+				data: JSON.stringify({
+					channel: channel,
+					event: event,
+					data: data
+				})
+			});
+		};
+	}
+
+	function socketListener() {
+		return function(channel, event, callback) {
+			if (!socket.channels.hasOwnProperty(channel)) {
+				socket.channels[channel] = socket.pusher.subscribe(channel);
+			}
+			if (event && callback) {
+				socket.channels[channel].bind(event, callback);
+			} else {
+				return socket.channels[channel];
+			}
+		};
+	}
+
+	function passengerMode() {
+		toggleController(false);
+		body.addClass('passenger');
+		socket.listen('sync', 'state', syncState);
+	}
+
+	function driverMode() {
+		toggleController(true);
+		body.addClass('driver');
+		console.log(socket.listen('presence-sync'));
+	}
+
 	function openSocket(manifest) {
 		if (manifest.pusherApiKey) {
-			socket.pusher = new Pusher(manifest.pusherApiKey, {
-				encrypted: true
-			});
-			socket.listen = function(channel, event, callback) {
-				if (!socket.channels.hasOwnProperty(channel)) {
-					socket.channels[channel] = socket.pusher.subscribe(channel);
-				}
-				socket.channels[channel].bind(event, callback);
-			};
-			var passengerMode = function() {
-				body.addClass('passenger');
-				toggleController(false);
-				socket.listen('sync', 'state', syncState);
-			};
+			var options = { encrypted: true };
+			socket.pusher = new Pusher(manifest.pusherApiKey, options);
+			socket.listen = socketListener();
 			if (manifest.driverUrl) {
 				$.getJSON(manifest.driverUrl).then(function(data){
 					if (data.api_key === manifest.pusherApiKey) {
-						body.addClass('driver');
-						toggleController(true);
-						socket.send = function(channel, event, data) {
-							return $.ajax({
-								url: manifest.driverUrl,
-								type: 'POST',
-								contentType: 'application/json',
-								data: JSON.stringify({
-									channel: channel,
-									event: event,
-									data: data
-								})
-							});
-						};
+						socket.send = socketSender(manifest);
+						Pusher.channel_auth_endpoint = manifest.driverUrl;
+						driverMode();
 					} else {
 						passengerMode();
 					}
@@ -280,7 +298,7 @@
 				passengerMode();
 			}
 		} else {
-			toggleController(true);
+			driverMode();
 		}
 	}
 
