@@ -69,7 +69,7 @@
 
 	function post(request, response) {
 		getargs(request, function(args){
-			console.log('RESPONSE', args);
+			console.log('REQUEST', args);
 			args.channel = args.channel || args.channel_name; /// ugh... c'mon Pusher...
 			if (args.channel) {
 				if (args.event) {
