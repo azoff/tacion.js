@@ -225,13 +225,14 @@
 	}
 
 	function syncState(newState) {
-		console.log(newState);
 		if (newState) {
 			if (!state.manual) {
-				change(newState.slide, newState.step, {
+				var transition = newState.slide !== state.slide ? 'slide' : 'none';
+				var reverse = newState.slide < state.slide;
+				change(newState.step, newState.slide, {
 					allowSamePageTransition: true,
-					reverse: newState.slide < state.slide,
-					transition: newState.slide !== state.slide
+					reverse: reverse,
+					transition: transition
 				});
 			}
 		} else {
