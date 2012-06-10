@@ -225,6 +225,7 @@
 	}
 
 	function syncState(newState) {
+		console.log(newState);
 		if (newState) {
 			if (!state.manual) {
 				change(newState.slide, newState.step, {
