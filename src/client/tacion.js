@@ -282,8 +282,8 @@
 
 	function openSocket(manifest) {
 		if (manifest.pusherApiKey) {
-			//var options = { encrypted: true };
-			socket.pusher = new Pusher(manifest.pusherApiKey);
+			var options = { encrypted: true };
+			socket.pusher = new Pusher(manifest.pusherApiKey, options);
 			socket.listen = socketListener();
 			if (manifest.driverUrl) {
 				$.getJSON(manifest.driverUrl).then(function(data){
