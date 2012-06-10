@@ -1,14 +1,14 @@
 {
-	"pusherApiKey": "ff4d7585176a252fe649",
-	"driverUrl": "http://127.0.0.1:1337",
-	"template": "page.html",
-	"slides": [
-		"intro.html",
-		"rationale.html",
-		"reach.html",
-		"interactive.html",
-		"themeable.html",
-		"connect.html",
-		"socket.html"
-	]
+    "pusherApiKey": "ff4d7585176a252fe649",
+    "driverUrl": "http://127.0.0.1:1337",
+    "template": "page.html",
+    "slides": [
+        "intro.html",
+        "rationale.html",
+        "reach.html",
+        "interactive.html",
+        "themeable.html",
+        "connect.html",
+        "socket.html"
+    ]
 }

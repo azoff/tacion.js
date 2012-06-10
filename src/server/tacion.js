@@ -84,7 +84,11 @@
 						}
 					);
 				} else if(args.socket_id) {
-					var auth = pusher.auth(args.socket_id, args.channel, args.data);
+					var auth = pusher.auth(args.socket_id, args.channel,{
+						user_id: 0,
+						ip: request.connection.remoteAddress,
+						port: request.connection.remotePort
+					});
 					return respond(response, 200, auth);
 				}
 			}

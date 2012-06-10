@@ -226,11 +226,13 @@
 
 	function syncState(newState) {
 		if (newState) {
-			change(newState.slide, newState.step, {
-				allowSamePageTransition: true,
-				reverse: newState.slide < state.slide,
-				transition: newState.slide !== state.slide
-			});
+			if (!state.manual) {
+				change(newState.slide, newState.step, {
+					allowSamePageTransition: true,
+					reverse: newState.slide < state.slide,
+					transition: newState.slide !== state.slide
+				});
+			}
 		} else {
 			socket.send('sync', 'state', {
 				slide: state.slide,
@@ -269,20 +271,19 @@
 
 	function passengerMode() {
 		toggleController(false);
-		body.addClass('passenger');
+		body.addClass(global.tacion.mode = 'passenger');
 		socket.listen('sync', 'state', syncState);
 	}
 
 	function driverMode() {
 		toggleController(true);
-		body.addClass('driver');
-		console.log(socket.listen('presence-sync'));
+		body.addClass(global.tacion.mode = 'driver');
 	}
 
 	function openSocket(manifest) {
 		if (manifest.pusherApiKey) {
-			var options = { encrypted: true };
-			socket.pusher = new Pusher(manifest.pusherApiKey, options);
+			//var options = { encrypted: true };
+			socket.pusher = new Pusher(manifest.pusherApiKey);
 			socket.listen = socketListener();
 			if (manifest.driverUrl) {
 				$.getJSON(manifest.driverUrl).then(function(data){
@@ -336,7 +337,9 @@
 		start: start,
 		change: change,
 		next: next,
-		prev: prev
+		prev: prev,
+		listen: socket.listen,
+		send: socket.send
 	};
 
 
