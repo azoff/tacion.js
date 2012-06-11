@@ -15,38 +15,31 @@
 		href="http://code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.css">
 	<link rel="stylesheet" media="screen" href="../../src/client/tacion.css">
 	<script src="../../libs/yepnope.min.js"></script>
-	<script>yepnope([{
-		test: !!window.JSON,
-		nope: 'libs/json3.min.js'
-	},{
-		load: [
-			'//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js',
-			'//js.pusher.com/1.11/pusher.min.js'
-		],
-		complete: function() {
-			if (!window.jQuery) { yepnope('libs/jquery-1.7.2.min.js'); }
-			if (!window.Pusher) { yepnope('libs/pusher-1.11.min.js'); }
-		}
-	},{
-		load: '//code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.js',
-		complete: function() {
-			if (!jQuery.mobile) { yepnope('libs/jquery.mobile-1.1.0.min.js'); }
-		}
-	},{
-		load: '../../src/client/tacion.js',
-		complete: function(){
-			tacion.start('.');
-
-			// Enable pusher logging - don't include this in production
-			Pusher.log = function(message) {
-			  if (window.console && window.console.log) window.console.log(message);
-			};
-
-			// Flash fallback logging - don't include this in production
-			WEB_SOCKET_DEBUG = true;
-
-		}
-	}])</script>
+	<script>
+		yepnope([{
+			test: !!window.JSON,
+			nope: 'libs/json3.min.js'
+		},{
+			load: [
+				'//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js',
+				'//js.pusher.com/1.11/pusher.min.js'
+			],
+			complete: function() {
+				if (!window.jQuery) { yepnope('libs/jquery-1.7.2.min.js'); }
+				if (!window.Pusher) { yepnope('libs/pusher-1.11.min.js'); }
+			}
+		},{
+			load: '//code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.js',
+			complete: function() {
+				if (!jQuery.mobile) { yepnope('libs/jquery.mobile-1.1.0.min.js'); }
+			}
+		},{
+			load: '../../src/client/tacion.js',
+			complete: function(){
+				tacion.start('.');
+			}
+		}]);
+	</script>
 </head>
 <body></body>
 </html>

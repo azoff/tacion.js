@@ -4,7 +4,7 @@
 	"use strict";
 
 	var folder, body, template;
-	var syncs = $();
+	var syncs = $(), machine = $('<a/>');
 	var urlCache = {};
 	var state = {};
 	var socket = {
@@ -13,6 +13,22 @@
 		listen: $.noop,
 		unlisten: $.noop
 	};
+
+	function namespaceEvent(event) {
+		return 'tacion:' + event;
+	}
+
+	function trigger(event, data) {
+		machine.trigger(namespaceEvent(event), data);
+	}
+
+	function on(event, callback) {
+		machine.on(namespaceEvent(event), callback);
+	}
+
+	function off(event, callback) {
+		machine.off(namespaceEvent(event), callback);
+	}
 
 	function spinner(msgText) {
 		if (msgText) {
@@ -66,7 +82,6 @@
 				toggleController(!syncing);
 			}
 		}
-		console.log('enabled', state.syncEnabled, enabled);
 		if (state.syncEnabled !== enabled && enabled !== undefined) {
 			state.syncEnabled = enabled;
 		}
@@ -182,6 +197,11 @@
 			gotoStep(step, slide);
 			mobile.changePage(slide, opts);
 			spinner(false);
+			trigger('update', {
+				slide: slide,
+				index: index,
+				step: step
+			});
 		});
 	}
 
@@ -451,12 +471,15 @@
 
 	// Expose the public API
 	global.tacion = {
+		spinner: spinner,
 		start: start,
 		change: change,
 		alert: alert,
 		next: next,
 		prev: prev,
-		socket: socket
+		socket: socket,
+		off: off,
+		on: on
 	};
 
 })(window, document, yepnope, Pusher, jQuery.mobile, jQuery);

@@ -1,5 +1,8 @@
 <div data-role="page">
 	<link rel="stylesheet" href="css/page.css">
+	<link rel="stylesheet" href="css/rainbow-blackboard.css">
+	<link rel="script" href="js/rainbow-custom.min.js">
+	<link rel="script" href="js/page.js">
 	<div data-id="header" data-role="header" data-position="fixed" data-sync-theme="b">
 		<div class="sync-control">
 			<select class="sync" data-role="slider" data-theme="c" data-mini="true">
@@ -9,11 +12,11 @@
 		</div>
 		<h1>SpainJS</h1>
 	</div>
-    <div class="alert ui-bar ui-bar-e">
-        <a class="closer" data-role="button" data-icon="delete" data-iconpos="notext" data-corners="true"
-           data-shadow="true" data-iconshadow="true" data-inline="true" data-wrapperels="span" title="Dismiss"></a>
-        <strong class="message"></strong>
-    </div>
+	<div class="alert ui-bar ui-bar-e">
+		<a class="closer" data-role="button" data-icon="delete" data-iconpos="notext" data-corners="true"
+		   data-shadow="true" data-iconshadow="true" data-inline="true" data-wrapperels="span" title="Dismiss"></a>
+		<strong class="message"></strong>
+	</div>
 	{{content}}
 	<div data-id="footer" data-role="footer" data-position="fixed">
 		<h1>{{index}} of {{count}}</h1>

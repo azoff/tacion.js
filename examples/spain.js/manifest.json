@@ -9,6 +9,7 @@
         "interactive.html",
         "themeable.html",
         "connect.html",
-        "socket.html"
+        "socket.html",
+        "code-index.html"
     ]
 }

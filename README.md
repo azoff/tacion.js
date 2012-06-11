@@ -4,11 +4,6 @@ A real-time, mobile presentation framework
 
 TODO
 ----
-- Show applicable devices on sockets page for driver
-- Show sync toggle on sockets page for passengers
-- Add toggle to socket page to show differences
-- Add logic to handle connection changes
-- Import rainbow.js
 - So how does it all work slides?
   - start with index.html
   - load slide folder, show folder structure

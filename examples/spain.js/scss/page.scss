@@ -1,4 +1,6 @@
 @import 'compass/css3/transition';
+@import 'compass/css3/text-shadow';
+@import 'compass/css3/border-radius';
 
 body { color: #444; }
 h1 { font-size: 2.2em; margin: 0.5em 0; }
@@ -25,6 +27,14 @@ li { list-style: none; margin-bottom: 1em; }
 		right: 10px;
 		top: 50%;
 		margin: -12px 0 0 !important;
+	}
+}
+
+pre {
+	@include border-radius(5px);
+	code {
+		@include text-shadow(0 0 0 transparent !important);
+		@include border-radius(5px);
 	}
 }
 
