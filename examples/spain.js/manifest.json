@@ -1,6 +1,6 @@
 {
-    "pusherApiKey": "ff4d7585176a252fe649",
-    "driverUrl": "http://127.0.0.1:1337",
+    "pusher": "ff4d7585176a252fe649",
+    "server": "http://127.0.0.1:1337",
     "template": "page.html",
     "slides": [
         "intro.html",
@@ -10,6 +10,7 @@
         "themeable.html",
         "connect.html",
         "socket.html",
-        "code-index.html"
+        "code-index.html",
+        "code-start.html"
     ]
 }

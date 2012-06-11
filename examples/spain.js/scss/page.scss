@@ -31,6 +31,7 @@ li { list-style: none; margin-bottom: 1em; }
 }
 
 pre {
+	font-size: 1em !important;
 	@include border-radius(5px);
 	code {
 		@include text-shadow(0 0 0 transparent !important);

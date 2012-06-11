@@ -339,7 +339,7 @@
 	function socketSender(manifest) {
 		return function(channel, event, data) {
 			return $.ajax({
-				url: manifest.driverUrl,
+				url: manifest.server,
 				type: 'POST',
 				contentType: 'application/json',
 				data: JSON.stringify({
@@ -403,7 +403,7 @@
 		});
 	}
 
-	window.onConnectionChange = function onConnectionChange(event) {
+	function onConnectionChange(event) {
 		var errorMessages = {
 			'failed': 'Syncing support unavailable for this device.',
 			'disconnected': 'Connection lost! Will try again momentarily...'
@@ -415,22 +415,22 @@
 			toggleSyncing(true, true);
 			alert(false);
 		}
-	};
+	}
 
 	function openSocket(manifest) {
 		passengerMode();
 		toggleSyncing(false, false);
-		if (manifest.pusherApiKey) {
+		if (manifest.pusher) {
 			var options = { encrypted: true };
-			socket.pusher = new Pusher(manifest.pusherApiKey, options);
+			socket.pusher = new Pusher(manifest.pusher, options);
 			socket.listen = socketListener;
 			socket.unlisten = socketUnListener;
 			socket.listen('connection', 'state_change', onConnectionChange);
-			if (manifest.driverUrl) {
-				$.getJSON(manifest.driverUrl).then(function(data){
-					if (data.api_key === manifest.pusherApiKey) {
+			if (manifest.server) {
+				$.getJSON(manifest.server).then(function(data){
+					if (data.api_key === manifest.pusher) {
 						socket.send = socketSender(manifest);
-						Pusher.channel_auth_endpoint = manifest.driverUrl;
+						Pusher.channel_auth_endpoint = manifest.server;
 						driverMode();
 					} else {
 						passengerMode();
@@ -460,9 +460,10 @@
 
 	function start(presentation) {
 		folder = presentation;
-		var spin = function(){ spinner('loading presentation'); };
 		var manifest = $.getJSON(folder+'/manifest.json');
-		var ready = $.Deferred().then(spin);
+		var ready = $.Deferred().then(function(){
+			spinner('loading presentation');
+		});
 		$(ready.resolve);
 		$.when(manifest, ready).then(function(args){
 			init(args[0]);
