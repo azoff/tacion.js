@@ -4,12 +4,9 @@ A real-time, mobile presentation framework
 
 TODO
 ----
-- So how does it all work slides?
-  - show init function, settings for manifest
-  - show onchange handler, and change triggers
-  - show slide getter and renderer
+- Fix link on connect slide
 - Add credits slide
-- Create a video backup
+- Add minified version of tacion.js
 - Add tests
   - Test socket fallbacks
   - Post-push travis CI
@@ -18,6 +15,5 @@ TODO
 - Document code
 - Update README with documentation
 - Add LICENSE.md
-- Fix link on connect slide
-- Create github site
+- Create a video backup
 - Upgrade pusher account

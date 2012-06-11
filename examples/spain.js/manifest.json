@@ -20,6 +20,9 @@
 		"code-template.html",
 		"code-content.html",
 		"code-steps.html",
-		"syncing.html"
+		"syncing.html",
+		"code-opensocket.html",
+		"code-drivermode.html",
+		"server.html"
 	]
 }
