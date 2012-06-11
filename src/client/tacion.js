@@ -10,7 +10,8 @@
 	var socket = {
 		channels: [],
 		send: $.noop,
-		listen: $.noop
+		listen: $.noop,
+		unlisten: $.noop
 	};
 
 	function spinner(msgText) {
@@ -31,19 +32,62 @@
 		return $(template.replace(regex, onMatch));
 	}
 
-	function setSyncs(manual) {
-		syncs.val(manual?'manual':'automatic').slider('refresh');
+	function alternateHeaders() {
+		if (state.syncing) {
+			getSlide(state.slide).then(function(slide){
+				var headers = slide.data('headers');
+				var theme = 'ui-bar-' + headers.data('sync-theme');
+				headers.toggleClass(theme);
+				setTimeout(alternateHeaders, 2000);
+			});
+		}
+	}
+
+	function resetHeaders() {
+		$.each(state.slides, function(index, deferred){
+			if (deferred.then) {
+				getSlide(index).then(function(slide){
+					var headers = slide.data('headers');
+					var theme = 'ui-bar-' + headers.data('sync-theme');
+					headers.removeClass(theme);
+				});
+			}
+		});
+	}
+
+	function toggleSyncing(on, enabled) {
+		var syncing = !!on;
+		var value = syncing ? 'syncing' : 'off';
+		if (state.syncing !== syncing) {
+			state.syncing = syncing;
+			if (syncing) { alternateHeaders(); }
+			else { resetHeaders(); }
+			if (state.mode === 'passenger') {
+				toggleController(!syncing);
+			}
+		}
+		console.log('enabled', state.syncEnabled, enabled);
+		if (state.syncEnabled !== enabled && enabled !== undefined) {
+			state.syncEnabled = enabled;
+		}
+		if (state.syncEnabled) {
+			syncs.slider('enable');
+		} else {
+			syncs.slider('disable');
+		}
+		syncs.val(value).slider('refresh');
+	}
+
+	function changeSync(event) {
+		var sync = $(event.target);
+		toggleSyncing(sync.val() === 'syncing');
 	}
 
 	function addSync(sync) {
 		sync.each(function(){
 			syncs.push(this);
-		}).change(function(){
-			var sync = $(this);
-			var manual = sync.val() === 'manual';
-			toggleController(manual);
-		});
-		setSyncs(state.manual);
+		}).change(changeSync);
+		toggleSyncing(state.syncing);
 	}
 
 	function assetUrl(i, asset) {
@@ -62,16 +106,30 @@
 		var sync    = slide.find('.sync');
 		var job     = $.Deferred();
 		var assets  = slide.find('link[href]').remove();
+		var alert   = slide.find('.alert');
 		var steps   = slide.find('[data-step]');
+		var headers = slide.find('[data-sync-theme]');
 		var pstep   = content.data('page-step');
 		var urls    = $.makeArray(assets.map(assetUrl));
 		var done    = function(){ job.resolve(slide); };
-		slide.attr('id', content.attr('id')+'-page').data('steps', steps);
+
 		if (pstep) { steps.push(slide.attr('data-step', pstep).get(0)); }
-		slide.data('steps', steps).appendTo(body).page();
+		slide.attr('id', content.attr('id')+'-page')
+			.data('steps', steps)
+			.data('headers', headers)
+			.data('alert', alert)
+			.appendTo(body).page();
+
 		if (sync.size()) { addSync(sync); }
+		if (alert.size()) {
+			alert.on('click', function(){
+				alert.removeClass('active');
+			});
+		}
+
 		if (urls.length) { loader({ load: urls, complete: done }); }
 		else { done(); }
+
 		return job.promise();
 	}
 
@@ -87,10 +145,12 @@
 	function getSlide(index) {
 		var job = $.Deferred();
 		var slide = state.slides[index];
-		if ($.type(slide) === 'string') {
+		if (slide === undefined) {
+			job.reject(index);
+		} else if ($.type(slide) === 'string') {
 			state.slides[index] =
 				loadSlide(slide).then(job.resolve);
-		} else {
+		} else if (slide.then) {
 			slide.then(job.resolve);
 		}
 		return job.promise();
@@ -171,7 +231,7 @@
 	function prev() {
 		var index = state.slide;
 		var step = state.step;
-		getSlide(index).then(function(slide){
+		getSlide(index).then(function(){
 			var prevSlide = index - 1;
 			var prevStep = step - 1;
 			if (prevStep < 0) {
@@ -218,15 +278,18 @@
 		}
 	}
 
-	function toggleController(manual) {
-		setSyncs(state.manual = !!manual);
-		var method = manual ? 'on' : 'off';
-		dom[method]('swipeleft swiperight keyup', controller);
+	function toggleController(on) {
+		var manual = !!on;
+		if (state.manual !== manual) {
+			var method = (state.manual = manual) ? 'on' : 'off';
+			var events = 'swipeleft swiperight keyup';
+			dom[method](events, controller);
+		}
 	}
 
 	function syncState(newState) {
-		if (newState) {
-			if (!state.manual) {
+		if (state.syncing) {
+			if (newState && state.mode === 'passenger') {
 				var transition = newState.slide !== state.slide ? 'slide' : 'none';
 				var reverse = newState.slide < state.slide;
 				change(newState.step, newState.slide, {
@@ -234,12 +297,22 @@
 					reverse: reverse,
 					transition: transition
 				});
+			} else if (state.mode === 'driver') {
+				socket.send('sync', 'state', {
+					slide: state.slide,
+					step: state.step
+				});
 			}
+		}
+	}
+
+	function getChannel(name) {
+		if (name === 'connection') {
+			return socket.pusher.connection;
+		} else if (name in socket.channels) {
+			return socket.channels[name];
 		} else {
-			socket.send('sync', 'state', {
-				slide: state.slide,
-				step: state.step
-			});
+			return socket.channels[name] = socket.pusher.subscribe(name);
 		}
 	}
 
@@ -258,35 +331,81 @@
 		};
 	}
 
-	function socketListener() {
-		return function(channel, event, callback) {
-			if (!socket.channels.hasOwnProperty(channel)) {
-				socket.channels[channel] = socket.pusher.subscribe(channel);
-			}
+	function socketListener(channelName, event, callback) {
+		if (channelName) {
+			var channel = getChannel(channelName);
 			if (event && callback) {
-				socket.channels[channel].bind(event, callback);
-			} else {
-				return socket.channels[channel];
+				channel.bind(event, callback);
 			}
-		};
+			return channel;
+		}
+		return false;
+	}
+
+	function socketUnListener(channelName, event, callback) {
+		if (channelName in socket.channels) {
+			var channel = getChannel(channelName);
+			if (event && callback) {
+				channel.unbind(event, callback);
+			}
+			return channel;
+		}
 	}
 
 	function passengerMode() {
-		toggleController(false);
-		body.addClass(global.tacion.mode = 'passenger');
+		body.addClass(state.mode = 'passenger');
+		body.removeClass('driver');
 		socket.listen('sync', 'state', syncState);
+		toggleController(!!state.manual);
 	}
 
 	function driverMode() {
+		body.addClass(state.mode = 'driver');
+		body.removeClass('passenger');
+		socket.unlisten('sync', 'state', syncState);
 		toggleController(true);
-		body.addClass(global.tacion.mode = 'driver');
 	}
 
+	function alert(message) {
+		getSlide(state.slide).then(function(slide){
+			var alert = slide.data('alert');
+			if (alert) {
+				if ($.type(message) === 'string') {
+					alert.children('.message').text(message);
+					alert.addClass('active');
+					mobile.silentScroll(0);
+				} else {
+					alert.removeClass('active');
+				}
+			} else if ($.type(message) === 'string') {
+				global.alert(message);
+			}
+		});
+	}
+
+	window.onConnectionChange = function onConnectionChange(event) {
+		var errorMessages = {
+			'failed': 'Syncing support unavailable for this device.',
+			'disconnected': 'Connection lost! Will try again momentarily...'
+		};
+		if (event.current in errorMessages) {
+			toggleSyncing(false, false);
+			alert(errorMessages[event.current]);
+		} else if (event.current === 'connected') {
+			toggleSyncing(true, true);
+			alert(false);
+		}
+	};
+
 	function openSocket(manifest) {
+		passengerMode();
+		toggleSyncing(false, false);
 		if (manifest.pusherApiKey) {
 			var options = { encrypted: true };
 			socket.pusher = new Pusher(manifest.pusherApiKey, options);
-			socket.listen = socketListener();
+			socket.listen = socketListener;
+			socket.unlisten = socketUnListener;
+			socket.listen('connection', 'state_change', onConnectionChange);
 			if (manifest.driverUrl) {
 				$.getJSON(manifest.driverUrl).then(function(data){
 					if (data.api_key === manifest.pusherApiKey) {
@@ -297,11 +416,7 @@
 						passengerMode();
 					}
 				}).error(passengerMode);
-			} else {
-				passengerMode();
 			}
-		} else {
-			driverMode();
 		}
 	}
 
@@ -338,12 +453,10 @@
 	global.tacion = {
 		start: start,
 		change: change,
+		alert: alert,
 		next: next,
 		prev: prev,
-		listen: socket.listen,
-		send: socket.send
+		socket: socket
 	};
-
-
 
 })(window, document, yepnope, Pusher, jQuery.mobile, jQuery);

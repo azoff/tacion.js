@@ -21,9 +21,6 @@
 }
 
 #themeable-page.active {
-	 &, [data-role=header], [data-role=footer] {
-		 @include transition(background-color 1s);
-	 }
 	 background-color: #FEFF26 !important;
 	 [data-role=header] {
 		 background-color: #B90A16 !important;
