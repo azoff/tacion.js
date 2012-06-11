@@ -12,7 +12,7 @@
 		position: relative;
 		background: none top left no-repeat scroll transparent;
 		&.active {
-			 @include transition(left 1s, right 1s);
+			 @include transition(left 1s);
 		}
 		&.jquery-logo {
 			left: -250px;
