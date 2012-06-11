@@ -1,16 +1,19 @@
 {
-    "pusher": "ff4d7585176a252fe649",
-    "server": "http://127.0.0.1:1337",
-    "template": "page.html",
-    "slides": [
-        "intro.html",
-        "rationale.html",
-        "reach.html",
-        "interactive.html",
-        "themeable.html",
-        "connect.html",
-        "socket.html",
-        "code-index.html",
-        "code-start.html"
-    ]
+	"pusher": "ff4d7585176a252fe649",
+	"server": "http://127.0.0.1:1337",
+	"template": "page.html",
+	"slides": [
+		"intro.html",
+		"rationale.html",
+		"reach.html",
+		"interactive.html",
+		"themeable.html",
+		"connect.html",
+		"socket.html",
+		"code-index.html",
+		"code-start.html",
+		"code-init.html",
+		"code-change.html",
+		"code-update.html"
+	]
 }
