@@ -14,6 +14,11 @@
 		"code-start.html",
 		"code-init.html",
 		"code-change.html",
-		"code-update.html"
+		"code-update.html",
+		"code-getslide.html",
+		"code-slide.html",
+		"code-template.html",
+		"code-content.html",
+		"code-steps.html"
 	]
 }

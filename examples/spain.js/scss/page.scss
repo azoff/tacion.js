@@ -35,6 +35,7 @@ ol, li {
 }
 
 pre {
+	white-space: pre-wrap;
 	font-size: 1em !important;
 	@include border-radius(5px);
 	code {
