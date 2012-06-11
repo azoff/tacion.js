@@ -31,5 +31,6 @@ TODO
 - Add build script
 - Add npm packaging?
 - Add to site and cv
+- Tag and version build
 - Create a video backup
 - Upgrade pusher account
