@@ -23,9 +23,11 @@ TODO
 - Add LICENSE.md
 - Document code
 - Update README with documentation
-- Add tests
-  - Test socket fallbacks
-  - Post-push travis CI
+- Add CasperJS Tests: http://casperjs.org/
+  - Create tests directory
+  - Test every method in public API
+  - Add to travis CI
+  - Add travis image to README.md
 - Tacion logo, iOS icons, and favicon
 - Add minified version of tacion.js
 - Add build script
