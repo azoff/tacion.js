@@ -478,7 +478,6 @@
 		alert: alert,
 		next: next,
 		prev: prev,
-		socket: socket,
 		off: off,
 		on: on
 	};
