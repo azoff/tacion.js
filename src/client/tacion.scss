@@ -11,13 +11,6 @@ body {
 	}
 }
 
-[data-role=page] {
-	&, [data-role=header], [data-role=footer] {
-		@include transition-property((background-color, color));
-		@include transition-duration(1s);
-	}
-}
-
 .step {
 	&.opacity {
 		@include opacity(0);

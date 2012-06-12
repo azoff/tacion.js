@@ -4,7 +4,6 @@ A real-time, mobile presentation framework
 
 TODO
 ----
-- Add slide for passenger
 - Add global API slide
 - Show usage of 'on' method in API
 - Add recap slide
@@ -16,6 +15,7 @@ TODO
 - Add credits slide
 - Deploy github site
 - Fix link on connect slide
+- Fix jump on hash change
 - Add fork and DL links to home slide
 - Add google analytics
 - Add errorception tracking

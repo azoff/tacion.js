@@ -23,6 +23,8 @@
 		"syncing.html",
 		"code-opensocket.html",
 		"code-drivermode.html",
-		"server.html"
+		"server.html",
+		"code-passengermode.html",
+		"code-api.html"
 	]
 }

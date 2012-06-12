@@ -15,6 +15,8 @@ ol, li {
 
 [data-role=footer],[data-role=header],[data-role=page] {
 	background-image: none !important;
+	@include transition-property((background-color, color));
+	@include transition-duration(1s);
 }
 
 .alert {
