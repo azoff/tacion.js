@@ -22,44 +22,48 @@
 		return (index >= 0) ? (index + start) : index;
 	}
 
+	function parseCode(code, basename) {
+		return function(text){
+			var start = code.data('start');
+			var end = code.data('end');
+			var unindent = parseInt(code.data('unindent')||0, 10);
+			var header = '// ' + basename;
+			var length;
+			if (start) {
+				start = indexOf(text, start);
+				start = start >= 0 ? start : 0;
+			} else {
+				start = 0;
+			}
+			if (end) {
+				length = end.length;
+				end = indexOf(text, end, start);
+			}
+			if (end > start) {
+				length += end - start;
+				header += ':' + start + '-' + end;
+			} else if (start) {
+				header += ':' + start;
+			}
+			text = text.substr(start, length);
+			if (unindent > 0) {
+				while (unindent--) {
+					text = text.replace(/\t(\t*)/g, '$1');
+				}
+			}
+			text = header + '\n\n' + text.replace(/\t/g, '   ');
+			code.text(text);
+			highlighter.color(code);
+		};
+	}
+
 	function checkLoadFile(i, element) {
 		var code = $(element);
 		var file = code.data('file');
 		if (file) {
 			var basename = file.substr(file.lastIndexOf('/')+1);
 			code.text('Loading ' + basename + '...');
-			return loadFile(file).then(function(text){
-				var start = code.data('start');
-				var end = code.data('end');
-				var unindent = parseInt(code.data('unindent')||0, 10);
-				var header = '// ' + basename;
-				var length;
-				if (start) {
-					start = indexOf(text, start);
-					start = start >= 0 ? start : 0;
-				} else {
-					start = 0;
-				}
-				if (end) {
-					length = end.length;
-					end = indexOf(text, end, start);
-				}
-				if (end > start) {
-					length += end - start;
-					header += ':' + start + '-' + end;
-				} else if (start) {
-					header += ':' + start;
-				}
-				text = text.substr(start, length);
-				if (unindent > 0) {
-					while (unindent--) {
-						text = text.replace(/\t(\t*)/g, '$1');
-					}
-				}
-				text = header + '\n\n' + text;
-				code.text(text);
-				highlighter.color(code);
-			});
+			return loadFile(file).then(parseCode(code, basename));
 		} else {
 			highlighter.color(code);
 			return undefined;

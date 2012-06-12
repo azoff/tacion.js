@@ -25,6 +25,9 @@
 		"code-drivermode.html",
 		"server.html",
 		"code-passengermode.html",
-		"code-api.html"
+		"code-api.html",
+		"recap.html",
+		"questions.html",
+		"thanks.html"
 	]
 }

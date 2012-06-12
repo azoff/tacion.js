@@ -13,6 +13,13 @@ ol, li {
 	padding: 0;
 }
 
+a {
+	text-decoration: none;
+	&:hover {
+		text-decoration: underline;
+	}
+}
+
 [data-role=footer],[data-role=header],[data-role=page] {
 	background-image: none !important;
 	@include transition-property((background-color, color));
