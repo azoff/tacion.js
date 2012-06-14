@@ -5,16 +5,15 @@ A real-time, mobile presentation framework
 TODO
 ----
 - Document code
-- Add LICENSE.md
+- Tacion logo, iOS icons, and favicon
+- Add minified version of tacion.js
+- Add build script
 - Update README with documentation
 - Add CasperJS Tests: http://casperjs.org/
   - Create tests directory
   - Test every method in public API
   - Add to travis CI
   - Add travis image to README.md
-- Tacion logo, iOS icons, and favicon
-- Add minified version of tacion.js
-- Add build script
 - Add npm packaging?
 - Create github site
   - tac.io
