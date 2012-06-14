@@ -16,7 +16,16 @@
 	<link rel="stylesheet" media="screen" href="../../src/client/tacion.css">
 	<script src="../../libs/yepnope.min.js"></script>
 	<script>
+		(function(w){
+			w._gaq    = [['_setAccount', 'UA-32644359-1'],['_trackPageview']];
+			w._errs   = ["4fd9a7ff67983f161000052a"];
+			w.onerror = function(){ _errs.push(arguments); };
+		})(window);
+	</script>
+	<script>
 		yepnope([{
+			load: '//d15qhc0lu1ghnk.cloudfront.net/beacon.js'
+		},{
 			test: !!window.JSON,
 			nope: 'libs/json3.min.js'
 		},{
@@ -38,6 +47,8 @@
 			complete: function(){
 				tacion.start('.');
 			}
+		},{
+			load: 'https://ssl.google-analytics.com/ga.js'
 		}]);
 	</script>
 </head>

@@ -4,11 +4,6 @@ A real-time, mobile presentation framework
 
 TODO
 ----
-- Fix jump on hash change
-- Add fork and DL links to home slide
-- Add google analytics
-- Add errorception tracking
-  - Contact founder: http://blog.rakeshpai.me/
 - Add LICENSE.md
 - Document code
 - Update README with documentation
@@ -20,8 +15,12 @@ TODO
 - Tacion logo, iOS icons, and favicon
 - Add minified version of tacion.js
 - Add build script
+- Create github site
+  - tac.io
 - Add npm packaging?
 - Add to site and cv
 - Tag and version build
 - Create a video backup
+- Upgrade Errorception
+  - https://mail.google.com/mail/?view=cm&fs=1&tf=1&source=mailto&to=rakeshpai@errorception.com
 - Upgrade pusher account
