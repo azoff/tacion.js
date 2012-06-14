@@ -4,8 +4,8 @@ A real-time, mobile presentation framework
 
 TODO
 ----
-- alert width on ipad
-- flicker on slide change (scroll?)
+- Fix alert width on iPad
+- Fix flicker on slide change (scroll?)
 - Document code
 - Tacion logo, iOS icons, and favicon
 - Add minified version of tacion.js
