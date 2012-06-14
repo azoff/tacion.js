@@ -10,7 +10,7 @@
 		width: 320px;
 		height: 196px;
 		&.active {
-			left: 0;
+			left: -1em;
 			 @include transition(left 1s);
 		}
 	}

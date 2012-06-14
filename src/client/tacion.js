@@ -3,7 +3,7 @@
 
 	"use strict";
 
-	var folder, body, template;
+	var folder, body, template, scroller;
 	var syncs = $(), machine = $('<a/>');
 	var urlCache = {};
 	var state = {};
@@ -148,12 +148,22 @@
 		return job.promise();
 	}
 
+	function slideError(xhr, error, ex) {
+		var messages = {
+			parsererror: 'Slide is mal-formed',
+			error: 'Client Error (' + ex + ')',
+			timeout: 'Request timed out',
+			abort: 'Request aborted'
+		};
+		alert('Unable to load slide: ' + messages[error]);
+	}
+
 	function loadSlide(path) {
 		var url = folder + '/' + path;
 		var job = $.Deferred();
 		$.get(url).then(function(html) {
 			renderSlide(html).then(job.resolve);
-		});
+		}).fail(slideError);
 		return job.promise();
 	}
 
@@ -172,11 +182,18 @@
 	}
 
 	function gotoStep(step, slide) {
+		var top;
 		slide.data('steps').each(function(){
 			var element = $(this);
 			var active = element.data('step') <= step;
 			element.toggleClass('active', active);
+			if (active) {
+				top = element.offset().top;
+			}
 		});
+		if (top) {
+			scroller.animate(top);
+		}
 	}
 
 	function options(slide, data) {
@@ -192,10 +209,12 @@
 		state.slide = index;
 		state.step = step;
 		syncState();
+		scroller.push();
 		getSlide(index).then(function(slide){
 			var opts = options(slide, data);
-			gotoStep(step, slide);
 			mobile.changePage(slide, opts);
+			scroller.pop();
+			gotoStep(step, slide);
 			spinner(false);
 			trigger('update', {
 				slide: slide,
@@ -393,7 +412,7 @@
 				if ($.type(message) === 'string') {
 					alert.children('.message').text(message);
 					alert.addClass('active');
-					mobile.silentScroll(0);
+					scroller.animate(0);
 				} else {
 					alert.removeClass('active');
 				}
@@ -440,21 +459,43 @@
 		}
 	}
 
-	function init(manifest) {
-		var done = function(html) {
-			var current = urlState();
-			template = html || '<div data-role="page">{{content}}</div>';
-			change(current.step, current.slide, { transition: 'fade' });
-		};
+	function cacheDomReferences() {
 		body = $(dom.body);
+		dom = $(dom).on('pagebeforechange', onChange);
+		var html = body.closest('html').andSelf();
+		var window = $(global);
+		scroller = {
+			push: function() {
+				scroller.top = window.scrollTop();
+			},
+			pop: function() {
+				window.scrollTop(scroller.top);
+			},
+			animate: function(top, time) {
+				setTimeout(function(){
+					html.animate({
+						scrollTop: Math.max(0, top-50)
+					}, time || 500);
+				}, 20);
+			}
+		};
+	}
+
+	function loadFirstSlide(html) {
+		var current = urlState();
+		template = html || '<div data-role="page">{{content}}</div>';
+		change(current.step, current.slide, { transition: 'fade' });
+	}
+
+	function init(manifest) {
 		state.slides = manifest.slides;
 		state.count = manifest.slides.length;
-		dom = $(dom).on('pagebeforechange', onChange);
+		cacheDomReferences();
 		openSocket(manifest);
 		if (manifest.template) {
-			$.get(folder+'/'+manifest.template).then(done);
+			$.get(folder+'/'+manifest.template).then(loadFirstSlide);
 		} else {
-			done();
+			loadFirstSlide();
 		}
 	}
 
