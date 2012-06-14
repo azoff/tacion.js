@@ -19,6 +19,7 @@ TODO
 - Add npm packaging?
 - Create github site
   - tac.io
+  - http://www.juicebox.net/img/demo-home.jpg
 - Tag and version build
 - Create a video backup
 - Upgrade Errorception
