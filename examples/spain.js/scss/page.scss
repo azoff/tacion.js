@@ -1,6 +1,7 @@
 @import 'compass/css3/transition';
 @import 'compass/css3/text-shadow';
 @import 'compass/css3/border-radius';
+@import 'compass/css3/box-sizing';
 
 body { color: #444; }
 h1 { font-size: 2.2em; margin: 0.5em 0; }
@@ -28,10 +29,13 @@ a {
 
 .alert {
 	@include transition(top 500ms);
+	@include box-sizing(border-box);
 	position: absolute !important;
-	padding-right: 40px !important;
 	overflow: hidden;
+	padding-right: 40px !important;
 	top: -2.5em;
+	height: 3em;
+	width: 100%;
 	&.active {
 		top: 2.5em;
 	}

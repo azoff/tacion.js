@@ -3,7 +3,7 @@
 
 	"use strict";
 
-	var folder, body, template, scroller;
+	var folder, html, body, template;
 	var syncs = $(), machine = $('<a/>');
 	var urlCache = {};
 	var state = {};
@@ -181,41 +181,57 @@
 		return job.promise();
 	}
 
+	function elementVisible(el) {
+		var top = el.offsetTop;
+		var left = el.offsetLeft;
+		var width = el.offsetWidth;
+		var height = el.offsetHeight;
+
+		while(el.offsetParent) {
+			el = el.offsetParent;
+			top += el.offsetTop;
+			left += el.offsetLeft;
+		}
+
+		return (
+			top >= global.pageYOffset &&
+			left >= global.pageXOffset &&
+			(top + height) <= (global.pageYOffset + global.innerHeight - 50) &&
+			(left + width) <= (global.pageXOffset + global.innerWidth)
+		);
+	}
+
 	function gotoStep(step, slide) {
-		var top;
+		var last;
 		slide.data('steps').each(function(){
 			var element = $(this);
 			var active = element.data('step') <= step;
 			element.toggleClass('active', active);
-			if (active) {
-				top = element.offset().top;
-			}
+			if (active) { last = element; }
 		});
-		if (top) {
-			scroller.animate(top);
+		if (last && !elementVisible(last.get(0))) {
+			scrollTo(last.offset().top - 100);
 		}
 	}
 
 	function options(slide, data) {
 		return $.extend({
 			dataUrl: data.toPage,
-			changeHash: true,
 			transition: slide.data('transition') || 'slide'
 		}, data.options || {});
 	}
 
 	function update(index, step, data) {
+		var top = index !== state.slide;
 		spinner('loading slide');
 		state.slide = index;
 		state.step = step;
 		syncState();
-		scroller.push();
 		getSlide(index).then(function(slide){
 			var opts = options(slide, data);
+			if (top) { scrollTo(0, 0); }
 			mobile.changePage(slide, opts);
-			scroller.pop();
 			gotoStep(step, slide);
-			spinner(false);
 			trigger('update', {
 				slide: slide,
 				index: index,
@@ -412,7 +428,7 @@
 				if ($.type(message) === 'string') {
 					alert.children('.message').text(message);
 					alert.addClass('active');
-					scroller.animate(0);
+					scrollTo(0);
 				} else {
 					alert.removeClass('active');
 				}
@@ -459,26 +475,16 @@
 		}
 	}
 
+	function scrollTo(top, time) {
+		var scrollTop = Math.max(top, 0);
+		var duration = time !== undefined ? time : 500;
+		html.animate({ scrollTop: scrollTop }, duration);
+	}
+
 	function cacheDomReferences() {
 		body = $(dom.body);
 		dom = $(dom).on('pagebeforechange', onChange);
-		var html = body.closest('html').andSelf();
-		var window = $(global);
-		scroller = {
-			push: function() {
-				scroller.top = window.scrollTop();
-			},
-			pop: function() {
-				window.scrollTop(scroller.top);
-			},
-			animate: function(top, time) {
-				setTimeout(function(){
-					html.animate({
-						scrollTop: Math.max(0, top-50)
-					}, time || 500);
-				}, 20);
-			}
-		};
+		html = body.closest('html').andSelf();
 	}
 
 	function loadFirstSlide(html) {
@@ -524,3 +530,34 @@
 	};
 
 })(window, document, yepnope, Pusher, jQuery.mobile, jQuery);
+
+/**
+ * *** NOTE: THIS IS A HACK ***
+ * I was forced to hot-patch jQuery mobile to fix it's
+ * scroll preservation support. jQuery mobile is
+ * supposed to keep track of your last scroll offset
+ * before a transition, and the restore it after the
+ * transition. Unfortunately, when transitioning
+ * between steps on a slide, the scroll offset is lost.
+ * This patch simply forces the active history object
+ * to always have a "lastScroll" property, essentially
+ * remedying the situation. Alas, I have no idea if this
+ * change will break other components.
+ */
+(function(history, global){
+
+	"use strict";
+
+	var oldGetActive = history.getActive;
+	var frame = $(global);
+
+	history.getActive = function(){
+		var active = oldGetActive() || {};
+		if (active.lastScroll === undefined) {
+			active.lastScroll = frame.scrollTop();
+		}
+		return active;
+	};
+
+})(jQuery.mobile.urlHistory, window);
+

@@ -8,7 +8,7 @@
 	<meta name="author" content="Jonathan Azoff">
 	<meta name="HandheldFriendly" content="True">
 	<meta name="MobileOptimized" content="320">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="viewport" content="width=device-width, minimum-scale=1, maximum-scale=1">
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="black">
 	<link rel="stylesheet" media="screen"
@@ -38,7 +38,8 @@
 				if (!window.Pusher) { yepnope('libs/pusher-1.11.min.js'); }
 			}
 		},{
-			load: '//code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.js',
+//			load: '//code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.js',
+			load: '//code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.js',
 			complete: function() {
 				if (!jQuery.mobile) { yepnope('libs/jquery.mobile-1.1.0.min.js'); }
 			}
