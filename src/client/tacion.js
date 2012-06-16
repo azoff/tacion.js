@@ -3,16 +3,472 @@
 
 	"use strict";
 
-	var folder, html, body, template;
-	var syncs = $(), machine = $('<a/>');
-	var urlCache = {};
-	var state = {};
-	var socket = {
-		channels: [],
-		send: $.noop,
-		listen: $.noop,
-		unlisten: $.noop
+	/**
+	* A map of jQuery elements that are used globally
+	* @type {Object}
+	*/
+	var elements = {
+		window: $(global)
 	};
+
+	/**
+	* A map of properties used to globally keep track of presentation state
+	* @type {Object}
+	*/
+	var presentation = { };
+
+	/**
+	* A map of objects required for syncing over pusher's web-socket service
+	* @type {Object}
+	*/
+	var sync = {
+		enabled: false,
+		channels: {}
+	};
+
+	/**
+	* Starts a presentation by loading its manifest and then
+	* calling the init function when the manifest is done loading.
+	* @param {String} folder The folder that manifest.json lives in
+	*/
+	function start(folder) {
+
+		// start a job to wait for document ready
+		var documentReady = $.Deferred();
+		elements.document = $(documentReady.resolve).on('pagebeforechange', onChange);
+
+		// cache DOM elements then the document is ready
+		documentReady.then(function(){
+			spinner('loading presentation');
+			elements.body = $(dom.body);
+			elements.html = elements.body.closest('html').andSelf();
+		});
+
+		// initialize tacion once we have a manifest file
+		var manifestLoaded = loadFile('manifest.json', folder);
+		$.when(manifestLoaded, documentReady).then(function(args){
+			init(args.shift());
+		});
+
+	}
+
+	/**
+	* Initializes the internal framework state.
+	* @param {Object} manifest The manifest file describing the presentation
+	*/
+	function init(manifest) {
+
+		// set slide parameters
+		presentation.slides     = manifest.slides;
+		presentation.slideCount = manifest.slides.length;
+
+		// try to connect the pusher web-socket service.
+		// no need to block, we can let this load in parallel
+		openSocket(manifest);
+
+		// set a slide template (if defined), then refresh the page
+		if (manifest.template) {
+			loadFile(manifest.template).then(setTemplate).then(refresh);
+		} else {
+			setTemplate('<div data-role="page">{{content}}</div>');
+			refresh();
+		}
+	}
+
+	/**
+	* Attempts to connect to the pusher web-socket service. By default,
+	* the method will put you in passenger mode. However, if a server is
+	* defined in the manifest, and you are able to connect to it, then
+	* it will put you in driver mode
+	* @param {Object} manifest The configuration object. Relevant properties
+	*                          are the 'pusher' and 'server' values.
+	*/
+	function openSocket(manifest) {
+
+		// pessimistically assume that the user is following along
+		passengerMode();
+
+		// disable all syncing - enables manual control
+		toggleSyncing(false, false);
+
+		// if the user has provided an API key, then attempt to
+		// connect to the pusher web-socket service
+		if (manifest.pusher) {
+
+			// create a reference to the pusher API
+			sync.api = new Pusher(manifest.pusher, { encrypted: true });
+
+			// monitor the API connection for the duration of the presentation
+			addSocketListener('connection', 'state_change', onConnectionChange);
+
+			// now, let's check if this user qualifies to drive the presentation
+			if (manifest.server) {
+
+				// attempt to communicate with the defined server
+				$.getJSON(manifest.server).then(function(data){
+
+					// if the server responds with the correct API key,
+					// then we are safe to assume that the current user is
+					// driving the presentation
+					if (data && data.api_key === manifest.pusher) {
+						// cache a reference to the valid server
+						sync.server = manifest.server;
+						// and mark this user as the slide driver
+						driverMode();
+					}
+
+				});
+
+			}
+		}
+	}
+
+	/**
+	* Depending on the sync role, this method determines whether or not
+	* events are sent or received across the sync channel
+	* @param enabled Whether or not events will be sent or received
+	* @param switchable Whether or not the user can switch between manual and sync mode
+	*/
+	function toggleSyncing(enabled, switchable) {
+
+		// set the sync theme based on the sync state
+		if (sync.enabled !== enabled) {
+			sync.enabled = enabled;
+			if (enabled) { alternateSyncThemes(); }
+			else         { resetSyncTheme();     }
+			if (sync.role === 'passenger') {
+				toggleController(!enabled);
+			}
+		}
+
+		// set whether or not the user can switch between sync and manual mode
+		if (sync.switchable !== switchable && switchable !== undefined) {
+			sync.switchable = switchable;
+		}
+
+		// enable or disable the sync switches
+		if (sync.switchable) {
+			sync.switches.slider('enable');
+		} else {
+			sync.switches.slider('disable');
+		}
+
+		// finally, set the sync switch values for all the slides
+		var value = enabled ? 'syncing' : 'off';
+		sync.switches.val(value).slider('refresh');
+
+	}
+
+	/**
+	* Alternates the theme of sync elements (like the header, if defined).
+	* Used to show that sync mode is on.
+	*/
+	function alternateSyncThemes() {
+		if (sync.enabled) {
+			getSlide(presentation.slide).then(function(slide){
+				var alternators = slide.data('alternators');
+				var theme = 'ui-bar-' + alternators.data('sync-theme');
+				alternators.toggleClass(theme);
+				setTimeout(alternateSyncThemes, 2000);
+			});
+		}
+	}
+
+	/**
+	* Resets the theme of the sync elements. Used to show that the
+	* manual mode is on.
+	*/
+	function resetSyncTheme() {
+		$.each(presentation.slides, function(index, gotSlide){
+			if (gotSlide.then) {
+				gotSlide.then(function(slide){
+					var alternators = slide.data('alternators');
+					var theme = 'ui-bar-' + alternators.data('sync-theme');
+					alternators.removeClass(theme);
+				});
+			}
+		});
+	}
+
+	/**
+	* Puts the user in passenger mode. This means that changes to the
+	* presentation's state are driven by the sync channel. If the user
+	* is in manual mode, then sync events will be ignored and the user
+	* can control his/her own presentation
+	*/
+	function passengerMode() {
+		elements.body.addClass(sync.role = 'passenger');
+		elements.body.removeClass('driver');
+		addSocketListener('sync', 'state', syncState);
+		toggleController(!!sync.manual);
+	}
+
+	/**
+	* Puts the user in driver mode. This means that changes to the
+	* presentation state are done manually, and all changes are
+	* sent to the sync channel for sharing with all passengers
+	*/
+	function driverMode() {
+		elements.body.addClass(sync.role = 'driver');
+		elements.body.removeClass('passenger');
+		removeSocketListener('sync', 'state', syncState);
+		toggleController(true);
+	}
+
+	/**
+	* Binds an event listener to a Pusher web-socket channel
+	* @param channelName The channel to bind a listener to
+	* @param event The event to listen for
+	* @param callback The handler for when the event is fired
+	*/
+	function addSocketListener(channelName, event, callback) {
+		if (channelName && sync.api) {
+			var channel = getOrCreateChannel(channelName);
+			if (event && callback) {
+				channel.bind(event, callback);
+			}
+		}
+	}
+
+	/**
+	* Removes an event listener from a Pusher web-socket channel
+	* @param channelName The channel to remove a listener from
+	* @param event The event to stop listening to
+	* @param callback The handler to remove
+	*/
+	function removeSocketListener(channelName, event, callback) {
+		if ((channelName in sync.channels) && sync.api) {
+			var channel = getOrCreateChannel(channelName);
+			if (event && callback) {
+				channel.unbind(event, callback);
+			}
+		}
+	}
+
+	/**
+	* Attempts to get or create a channel by name
+	* @param name The name of the channel to fetch
+	* @return {Pusher.Channel} The fetched channel
+	*/
+	function getOrCreateChannel(name) {
+		if (name === 'connection') {
+			return sync.api.connection;
+		} else if (name in sync.channels) {
+			return sync.channels[name];
+		} else {
+			return sync.channels[name] = sync.api.subscribe(name);
+		}
+	}
+
+	/**
+	* Loads a generic file from the presentation's folder
+	* @param path The relative file path to load
+	* @param {String} folder The folder to set for relative paths
+	* @return {jQuery.Deferred} The deferred object for the request
+	*/
+	function loadFile(path, folder) {
+		if (folder) { presentation.rootFolder = folder; }
+		return $.get(presentation.rootFolder+'/'+path);
+	}
+
+	/**
+	* Setter for the presentation's slide template
+	* @param {String} html The slide template markup
+	*/
+	function setTemplate(html) {
+		presentation.template = html;
+	}
+
+	/**
+	* Reloads the current slide and step based
+	* off of the state of the URL hash
+	*/
+	function refresh() {
+		var current = urlState(location);
+		change(current.step, current.slide, {
+			transition: 'fade'
+		});
+	}
+
+	/**
+	* Parses the a URL fragment for state information
+	* @param href An optional pass-in to parse, defaults to the current URL
+	* @return {Object} A state map from the URL
+	*/
+	function urlState(href) {
+		var url = href ? mobile.path.parseUrl(href) : global.location;
+		var hash = url.hash.split('#').pop();
+		var pairs = hash.split('&');
+		var args = { slide: 0, step: 0 };
+		$.each(pairs, function(i, pair){
+			pair = pair.split('=');
+			args[pair[0]] = parseInt(pair[1], 10);
+		});
+		return args;
+	}
+
+	/**
+	* Shows or hides a loading message in the UI
+	* @param {String|Boolean} msgText The text to show in the loading message, or false to hide it
+	*/
+	function spinner(msgText) {
+		if (msgText) {
+			mobile.showPageLoadingMsg('a', msgText, true);
+		} else {
+			mobile.hidePageLoadingMsg();
+		}
+	}
+
+	/**
+	* Changes the slide (or step) by updating the URL hash
+	* @param {Number} step The step to change to
+	* @param {Number} slide The slide to change to
+	* @param {Object} options Any options to override for the pending transition
+	*/
+	function change(step, slide, options) {
+		step = unsigned(step) ? step : 0;
+		slide = unsigned(slide) ? slide : 0;
+		mobile.changePage('#slide='+slide+'&step='+step, options);
+	}
+
+	/**
+	* Checks if a value is numeric, and greater or equal to 0
+	* @param i The value to check
+	* @return {Boolean} true if the value is unsigned, false otherwise
+	*/
+	function unsigned(i) {
+		return $.type(i) === 'number' && i >= 0;
+	}
+
+	/**
+	* Called whenever the 'pagebeforeload' event is fired. This method
+	* subverts jQuery mobile's built in controller so that we may load
+	* in our own content
+	* @param event The 'pagebeforeload' event object
+	* @param data A configuration object for the event
+	*/
+	function onChange(event, data) {
+		// if the location is a string, then a new slide was requested.
+		// if the location is not a string, then it is the content we
+		// generated for the slide.
+		var location = data.toPage;
+		if ($.type(location) === 'string') {
+			// load content for whatever slide is selected in the request
+			var current = urlState(location);
+			update(current.slide, current.step, data);
+			// this will subvert the default jQuery mobile logic, and
+			// allow us to generate our own content in the update call
+			event.preventDefault();
+		}
+	}
+
+	/**
+	* Updates the presentation to display the requested slide and step
+	* @param {Number} slide The slide to show
+	* @param {Number} step The step in the slide to transition to
+	* @param {Object} data A map of transition data
+	*/
+	function update(slide, step, data) {
+
+		spinner('loading slide');
+
+		// drivers sync state with passengers on update
+		if (sync.role === 'driver') {
+			syncState(slide, step);
+		}
+
+		// get the requested slide
+		getSlide(slide).then(function(page){
+
+			var defaults = {
+				dataUrl: data.toPage,
+				transition: 'none'
+			};
+
+			// scroll to the top and respect transitions on new slides
+			if (presentation.slide !== slide) {
+				defaults.transition = page.data('transition') || 'slide';
+				scrollTo(0, 0);
+			}
+
+			// set the slide state for this user
+			presentation.slide = slide;
+			presentation.step = step;
+
+			// instruct jQuery mobile to show the current slide
+			mobile.changePage(page, $.extend(defaults, data.options || {}));
+
+			// display the correct step to the user
+			gotoStep(step, slide);
+
+			// and inform the API that the slide has been updated
+			trigger('update', {
+				page: page,
+				slide: presentation.slide,
+				step: presentation.step
+			});
+
+		});
+
+	}
+
+	/**
+	* Transitions to a step in a given slide
+	* @param step The step to transition to
+	* @param page The parent slide page
+	*/
+	function gotoStep(step, page) {
+		var target, padding = 100;
+		// iterate over every step
+		page.data('steps').each(function(){
+			var element = $(this);
+			var active = element.data('step') <= step;
+			if (active) {
+				if (!element.hasClass('active') && !target) {
+					target = element;
+				}
+				element.addClass('active');
+			} else {
+				element.removeClass('active');
+			}
+		});
+		if (target && !elementVisible(target.get(0), padding)) {
+			scrollTo(target.offset().top-padding);
+		}
+	}
+
+	function scrollTo(top, time) {
+		var scrollTop = Math.max(top, 0);
+		var duration = time !== undefined ? time : 500;
+		var frame = $(global);
+		html.animate({
+			scrollTop: scrollTop
+		}, {
+			duration: duration,
+			step: function(){
+				frame.trigger('resize');
+			}
+		});
+	}
+
+	function syncState(slide, step) {
+		if (state.syncing) {
+			if (state.mode === 'passenger') {
+				var transition = newState.slide !== state.slide ? 'slide' : 'none';
+				var reverse = newState.slide < state.slide;
+				change(newState.step, newState.slide, {
+					allowSamePageTransition: true,
+					reverse: reverse,
+					transition: transition
+				});
+			} else if (state.mode === 'driver') {
+				socket.send('sync', 'state', {
+					slide: state.slide,
+					step: state.step
+				});
+			}
+		}
+	}
 
 	function namespaceEvent(event) {
 		return 'tacion:' + event;
@@ -30,14 +486,6 @@
 		machine.off(namespaceEvent(event), callback);
 	}
 
-	function spinner(msgText) {
-		if (msgText) {
-			mobile.showPageLoadingMsg('a', msgText, true);
-		} else {
-			mobile.hidePageLoadingMsg();
-		}
-	}
-
 	function slideNode(html) {
 		var regex = /\{\{([a-z]+)\}\}/g;
 		var onMatch = function(match, key){
@@ -46,51 +494,6 @@
 			else if (key === 'count') { return state.count; }
 		};
 		return $(template.replace(regex, onMatch));
-	}
-
-	function alternateHeaders() {
-		if (state.syncing) {
-			getSlide(state.slide).then(function(slide){
-				var headers = slide.data('headers');
-				var theme = 'ui-bar-' + headers.data('sync-theme');
-				headers.toggleClass(theme);
-				setTimeout(alternateHeaders, 2000);
-			});
-		}
-	}
-
-	function resetHeaders() {
-		$.each(state.slides, function(index, deferred){
-			if (deferred.then) {
-				getSlide(index).then(function(slide){
-					var headers = slide.data('headers');
-					var theme = 'ui-bar-' + headers.data('sync-theme');
-					headers.removeClass(theme);
-				});
-			}
-		});
-	}
-
-	function toggleSyncing(on, enabled) {
-		var syncing = !!on;
-		var value = syncing ? 'syncing' : 'off';
-		if (state.syncing !== syncing) {
-			state.syncing = syncing;
-			if (syncing) { alternateHeaders(); }
-			else { resetHeaders(); }
-			if (state.mode === 'passenger') {
-				toggleController(!syncing);
-			}
-		}
-		if (state.syncEnabled !== enabled && enabled !== undefined) {
-			state.syncEnabled = enabled;
-		}
-		if (state.syncEnabled) {
-			syncs.slider('enable');
-		} else {
-			syncs.slider('disable');
-		}
-		syncs.val(value).slider('refresh');
 	}
 
 	function changeSync(event) {
@@ -201,73 +604,6 @@
 		);
 	}
 
-	function gotoStep(step, slide) {
-		var target, padding = 100;
-		slide.data('steps').each(function(){
-			var element = $(this);
-			var active = element.data('step') <= step;
-			if (active) {
-				if (!element.hasClass('active') && !target) {
-					target = element;
-				}
-				element.addClass('active');
-			} else {
-				element.removeClass('active');
-			}
-		});
-		if (target && !elementVisible(target.get(0), padding)) {
-			scrollTo(target.offset().top-padding);
-		}
-	}
-
-	function options(slide, data) {
-		return $.extend({
-			dataUrl: data.toPage,
-			transition: slide.data('transition') || 'slide'
-		}, data.options || {});
-	}
-
-	function update(index, step, data) {
-		var top = index !== state.slide;
-		spinner('loading slide');
-		state.slide = index;
-		state.step = step;
-		syncState();
-		getSlide(index).then(function(slide){
-			var opts = options(slide, data);
-			if (top) { scrollTo(0, 0); }
-			mobile.changePage(slide, opts);
-			gotoStep(step, slide);
-			trigger('update', {
-				slide: slide,
-				index: index,
-				step: step
-			});
-		});
-	}
-
-	function urlState(href) {
-		var url = href ? mobile.path.parseUrl(href) : global.location;
-		var hash = url.hash.split('#').pop();
-		var pairs = hash.split('&');
-		var args = { slide: 0, step: 0 };
-		$.each(pairs, function(i, pair){
-			pair = pair.split('=');
-			args[pair[0]] = parseInt(pair[1], 10);
-		});
-		return args;
-	}
-
-	function unsigned(i) {
-		return $.type(i) === 'number' && i >= 0;
-	}
-
-	function change(step, slide, options) {
-		step = unsigned(step) ? step : 0;
-		slide = unsigned(slide) ? slide : 0;
-		mobile.changePage('#slide='+slide+'&step='+step, options);
-	}
-
 	function next() {
 		var index = state.slide;
 		var step = state.step;
@@ -310,15 +646,6 @@
 		});
 	}
 
-	function onChange(event, data) {
-		var location = data.toPage;
-		if ($.type(location) === 'string') {
-			var current = urlState(location);
-			update(current.slide, current.step, data);
-			event.preventDefault();
-		}
-	}
-
 	function controller(event) {
 		var target = $(event.target);
 		if (!target.is('.ui-focus, .ui-focus *')) {
@@ -348,35 +675,6 @@
 		}
 	}
 
-	function syncState(newState) {
-		if (state.syncing) {
-			if (newState && state.mode === 'passenger') {
-				var transition = newState.slide !== state.slide ? 'slide' : 'none';
-				var reverse = newState.slide < state.slide;
-				change(newState.step, newState.slide, {
-					allowSamePageTransition: true,
-					reverse: reverse,
-					transition: transition
-				});
-			} else if (state.mode === 'driver') {
-				socket.send('sync', 'state', {
-					slide: state.slide,
-					step: state.step
-				});
-			}
-		}
-	}
-
-	function getChannel(name) {
-		if (name === 'connection') {
-			return socket.pusher.connection;
-		} else if (name in socket.channels) {
-			return socket.channels[name];
-		} else {
-			return socket.channels[name] = socket.pusher.subscribe(name);
-		}
-	}
-
 	function socketSender(manifest) {
 		return function(channel, event, data) {
 			return $.ajax({
@@ -390,41 +688,6 @@
 				})
 			});
 		};
-	}
-
-	function socketListener(channelName, event, callback) {
-		if (channelName) {
-			var channel = getChannel(channelName);
-			if (event && callback) {
-				channel.bind(event, callback);
-			}
-			return channel;
-		}
-		return false;
-	}
-
-	function socketUnListener(channelName, event, callback) {
-		if (channelName in socket.channels) {
-			var channel = getChannel(channelName);
-			if (event && callback) {
-				channel.unbind(event, callback);
-			}
-			return channel;
-		}
-	}
-
-	function passengerMode() {
-		body.addClass(state.mode = 'passenger');
-		body.removeClass('driver');
-		socket.listen('sync', 'state', syncState);
-		toggleController(!!state.manual);
-	}
-
-	function driverMode() {
-		body.addClass(state.mode = 'driver');
-		body.removeClass('passenger');
-		socket.unlisten('sync', 'state', syncState);
-		toggleController(true);
 	}
 
 	function alert(message) {
@@ -458,89 +721,17 @@
 		}
 	}
 
-	function openSocket(manifest) {
-		passengerMode();
-		toggleSyncing(false, false);
-		if (manifest.pusher) {
-			var options = { encrypted: true };
-			socket.pusher = new Pusher(manifest.pusher, options);
-			socket.listen = socketListener;
-			socket.unlisten = socketUnListener;
-			socket.listen('connection', 'state_change', onConnectionChange);
-			if (manifest.server) {
-				$.getJSON(manifest.server).then(function(data){
-					if (data.api_key === manifest.pusher) {
-						socket.send = socketSender(manifest);
-						Pusher.channel_auth_endpoint = manifest.server;
-						driverMode();
-					} else {
-						passengerMode();
-					}
-				}).error(passengerMode);
-			}
-		}
-	}
-
-	function scrollTo(top, time) {
-		var scrollTop = Math.max(top, 0);
-		var duration = time !== undefined ? time : 500;
-		var frame = $(global);
-		html.animate({
-			scrollTop: scrollTop
-		}, {
-			duration: duration,
-			step: function(){
-				frame.trigger('resize');
-			}
-		});
-	}
-
-	function cacheDomReferences() {
-		body = $(dom.body);
-		dom = $(dom).on('pagebeforechange', onChange);
-		html = body.closest('html').andSelf();
-	}
-
-	function loadFirstSlide(html) {
-		var current = urlState();
-		template = html || '<div data-role="page">{{content}}</div>';
-		change(current.step, current.slide, { transition: 'fade' });
-	}
-
-	function init(manifest) {
-		state.slides = manifest.slides;
-		state.count = manifest.slides.length;
-		cacheDomReferences();
-		openSocket(manifest);
-		if (manifest.template) {
-			$.get(folder+'/'+manifest.template).then(loadFirstSlide);
-		} else {
-			loadFirstSlide();
-		}
-	}
-
-	function start(presentation) {
-		folder = presentation;
-		var manifest = $.getJSON(folder+'/manifest.json');
-		var ready = $.Deferred().then(function(){
-			spinner('loading presentation');
-		});
-		$(ready.resolve);
-		$.when(manifest, ready).then(function(args){
-			init(args[0]);
-		});
-	}
-
 	// Expose the public API
 	global.tacion = {
-		spinner: spinner,
-		start: start,
-		change: change,
 		alert: alert,
 		next: next,
-		prev: prev,
+		change: change,
 		off: off,
-		on: on
+		on: on,
+		prev: prev,
+		refresh: refresh,
+		spinner: spinner,
+		start: start
 	};
 
 })(window, document, yepnope, Pusher, jQuery.mobile, jQuery);

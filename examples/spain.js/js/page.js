@@ -71,7 +71,7 @@
 	}
 
 	function checkForCode(event, data) {
-		var code = data.slide.find('code:not(.rainbow)');
+		var code = data.element.find('code:not(.rainbow)');
 		if (code.size()) {
 			tacion.spinner('loading code...');
 			var jobs = $.makeArray(code.map(checkLoadFile));
