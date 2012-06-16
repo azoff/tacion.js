@@ -181,7 +181,7 @@
 		return job.promise();
 	}
 
-	function elementVisible(el) {
+	function elementVisible(el, padding) {
 		var top = el.offsetTop;
 		var left = el.offsetLeft;
 		var width = el.offsetWidth;
@@ -196,21 +196,27 @@
 		return (
 			top >= global.pageYOffset &&
 			left >= global.pageXOffset &&
-			(top + height) <= (global.pageYOffset + global.innerHeight - 50) &&
+			(top + height) <= (global.pageYOffset + global.innerHeight - (padding||0)) &&
 			(left + width) <= (global.pageXOffset + global.innerWidth)
 		);
 	}
 
 	function gotoStep(step, slide) {
-		var last;
+		var target, padding = 100;
 		slide.data('steps').each(function(){
 			var element = $(this);
 			var active = element.data('step') <= step;
-			element.toggleClass('active', active);
-			if (active) { last = element; }
+			if (active) {
+				if (!element.hasClass('active') && !target) {
+					target = element;
+				}
+				element.addClass('active');
+			} else {
+				element.removeClass('active');
+			}
 		});
-		if (last && !elementVisible(last.get(0))) {
-			scrollTo(last.offset().top - 100);
+		if (target && !elementVisible(target.get(0), padding)) {
+			scrollTo(target.offset().top-padding);
 		}
 	}
 
@@ -478,7 +484,15 @@
 	function scrollTo(top, time) {
 		var scrollTop = Math.max(top, 0);
 		var duration = time !== undefined ? time : 500;
-		html.animate({ scrollTop: scrollTop }, duration);
+		var frame = $(global);
+		html.animate({
+			scrollTop: scrollTop
+		}, {
+			duration: duration,
+			step: function(){
+				frame.trigger('resize');
+			}
+		});
 	}
 
 	function cacheDomReferences() {
