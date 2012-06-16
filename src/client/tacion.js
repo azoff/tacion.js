@@ -217,9 +217,9 @@
 
 	/**
 	* Binds an event listener to a Pusher web-socket channel
-	* @param channelName The channel to bind a listener to
-	* @param event The event to listen for
-	* @param callback The handler for when the event is fired
+	* @param {String} channelName The channel to bind a listener to
+	* @param {String} event The event to listen for
+	* @param {Function} callback The handler for when the event is fired
 	*/
 	function addSocketListener(channelName, event, callback) {
 		if (channelName && sync.api) {
@@ -232,9 +232,9 @@
 
 	/**
 	* Removes an event listener from a Pusher web-socket channel
-	* @param channelName The channel to remove a listener from
-	* @param event The event to stop listening to
-	* @param callback The handler to remove
+	* @param {String} channelName The channel to remove a listener from
+	* @param {String} event The event to stop listening to
+	* @param {Function} callback The handler to remove
 	*/
 	function removeSocketListener(channelName, event, callback) {
 		if ((channelName in sync.channels) && sync.api) {
@@ -246,8 +246,30 @@
 	}
 
 	/**
+	* Fires an event (with optional data) against a web-socket channel. Only
+	* drivers can use this method, as it sends messages to the server defined
+	* in the manifest. If the server is not there, this method will fail
+	* @param {String} channel The channel to fire the event on
+	* @param {String} event The event to fire on the channel
+	* @param {Object} data A map of data to send to the channel
+	* @return {jQuery.Deferred} The AJAX request to the server
+	*/
+	function sendSocketData(channel, event, data) {
+		return $.ajax({
+			url: sync.server,
+			type: 'POST',
+			contentType: 'application/json',
+			data: JSON.stringify({
+				channel: channel,
+				event: event,
+				data: data
+			})
+		});
+	}
+
+	/**
 	* Attempts to get or create a channel by name
-	* @param name The name of the channel to fetch
+	* @param {String} name The name of the channel to fetch
 	* @return {Pusher.Channel} The fetched channel
 	*/
 	function getOrCreateChannel(name) {
@@ -262,7 +284,7 @@
 
 	/**
 	* Loads a generic file from the presentation's folder
-	* @param path The relative file path to load
+	* @param {String} path The relative file path to load
 	* @param {String} folder The folder to set for relative paths
 	* @return {jQuery.Deferred} The deferred object for the request
 	*/
@@ -292,7 +314,7 @@
 
 	/**
 	* Parses the a URL fragment for state information
-	* @param href An optional pass-in to parse, defaults to the current URL
+	* @param {String} href An optional pass-in to parse, defaults to the current URL
 	* @return {Object} A state map from the URL
 	*/
 	function urlState(href) {
@@ -333,7 +355,7 @@
 
 	/**
 	* Checks if a value is numeric, and greater or equal to 0
-	* @param i The value to check
+	* @param {*} i The value to check
 	* @return {Boolean} true if the value is unsigned, false otherwise
 	*/
 	function unsigned(i) {
@@ -344,8 +366,8 @@
 	* Called whenever the 'pagebeforeload' event is fired. This method
 	* subverts jQuery mobile's built in controller so that we may load
 	* in our own content
-	* @param event The 'pagebeforeload' event object
-	* @param data A configuration object for the event
+	* @param {Event} event The 'pagebeforeload' event object
+	* @param {Object} data A configuration object for the event
 	*/
 	function onChange(event, data) {
 		// if the location is a string, then a new slide was requested.
@@ -408,14 +430,120 @@
 				step: presentation.step
 			});
 
+		}).fail(function(index){
+			alert('Unable to find slide #' + index);
 		});
 
 	}
 
 	/**
+	* Gets a slide from memory or from the server. Returns a job that can be
+	* used to extract the slide page element
+	* @param {Number} slide The slide index to retrieve
+	* @return {jQuery.Deferred} An async job that can be used to fetch the slide page
+	*/
+	function getSlide(slide) {
+
+		var loader = presentation.slides[slide];
+
+		// if the slide index does not exist, error out
+		if (loader === undefined) {
+			return $.Deferred().reject(slide);
+		} else {
+			// if the slide index is a path, we should convert it
+			// to an async loader for the slide
+			if (!loader.then) {
+				loader = presentation.slides[slide] = loadSlide(loader);
+			}
+			// finally, return the loader interface
+			return loader.promise();
+		}
+
+	}
+
+	/**
+	* Loads a slide from the server and returns a job that can be used to
+	* access the slide page
+	* @param {String} path The path to the slide content file
+	* @return {jQuery.Deferred} An async job that can be used to fetch the slide page
+	*/
+	function loadSlide(path) {
+		var afterRender = $.Deferred();
+		loadFile(path).then(function(html) {
+			renderSlide(html).then(afterRender.resolve);
+		});
+		return afterRender.promise();
+	}
+
+	/**
+	* Takes raw html content for a slide, and returns a job that can be used to access
+	* the final rendered slide page
+	* @param {String} html The raw html of the slide content
+	* @return {jQuery.Deferred} An async job that can be used to fetch the slide page
+	*/
+	function renderSlide(html) {
+
+		// used to track the render job
+		var job = $.Deferred();
+
+		// wraps the slide content with a template file
+		var slide   = wrapSlideContent(html);
+		var content = slide.find('[data-role=content]');
+
+		// the whole page might actually be a step
+		// (if the content defines a page step)
+		var pageStep = content.data('page-step');
+		if (pageStep) {
+			steps.push(slide.attr('data-step', pageStep).get(0));
+		}
+
+		// parse the slide content for shared elements
+		var alert       = slide.find('.alert');
+		var assets      = slide.find('link[href]').remove();
+		var steps       = slide.find('[data-step]');
+		var alternators = slide.find('[data-sync-theme]');
+		var contentId   = content.attr('id') || presentation.slide;
+
+		// bind slide data to the slide, and add the slide to the page
+		slide.attr('id', contentId + '-page').data({
+			steps: steps,
+			alternators: alternators,
+			alert: alert
+		}).appendTo(elements.body).page();
+
+		// add any sync switches to the global list
+		var syncSwitches = slide.find('.sync');
+		if (syncSwitches.size()) {
+			syncSwitches.each(addSyncSwitch);
+		}
+
+		// bind click listener to alers
+		if (alert.size()) {
+			alert.on('click', function(){
+				alert.removeClass('active');
+			});
+		}
+
+		// download any declared assets in the slide content
+		var urls = $.makeArray(assets.map(assetUrl));
+		var done = function(){ job.resolve(slide); };
+		if (urls.length) {
+			loader({
+				load: urls,
+				complete: done
+			});
+		} else {
+			done();
+		}
+
+		return job.promise();
+
+	}
+
+	/**
 	* Transitions to a step in a given slide
-	* @param step The step to transition to
-	* @param page The parent slide page
+	* @param {Number} step The step to transition to
+	* @param {jQuery} page The parent slide page
 	*/
 	function gotoStep(step, page) {
 		var target, padding = 100;
@@ -423,7 +551,9 @@
 		page.data('steps').each(function(){
 			var element = $(this);
 			var active = element.data('step') <= step;
+			// determine if the step is active or not
 			if (active) {
+				// capture the *first* converted step to scroll to
 				if (!element.hasClass('active') && !target) {
 					target = element;
 				}
@@ -432,58 +562,92 @@
 				element.removeClass('active');
 			}
 		});
+		// if the first converted step is off screen, then we
+		// scroll it into screen
 		if (target && !elementVisible(target.get(0), padding)) {
 			scrollTo(target.offset().top-padding);
 		}
 	}
 
+	/**
+	* Scrolls the screen to a Y position on the screen
+	* @param {Number} top The Y position to scroll to
+	* @param {Number} time The time to take when scrolling (default 500ms)
+	*/
 	function scrollTo(top, time) {
 		var scrollTop = Math.max(top, 0);
 		var duration = time !== undefined ? time : 500;
-		var frame = $(global);
-		html.animate({
+		var step = function(){
+			elements.window.trigger('resize');
+		};
+		elements.window.animate({
 			scrollTop: scrollTop
 		}, {
 			duration: duration,
-			step: function(){
-				frame.trigger('resize');
-			}
+			step: step
 		});
 	}
 
+	/**
+	* Syncs the state between a driver and passengers.
+	* Calling this method as a driver sends the state to passengers.
+	* Calling as a passenger will set the current state to the provided values.
+	* @param {Number} slide The slide to change to
+	* @param {Number} step The step to go to
+	*/
 	function syncState(slide, step) {
-		if (state.syncing) {
-			if (state.mode === 'passenger') {
-				var transition = newState.slide !== state.slide ? 'slide' : 'none';
-				var reverse = newState.slide < state.slide;
-				change(newState.step, newState.slide, {
+		if (sync.enabled) {
+			if (sync.role === 'passenger') {
+				var transition = slide !== presentation.slide ? 'slide' : 'none';
+				var reverse = slide < presentation.slide;
+				change(step, slide, {
 					allowSamePageTransition: true,
-					reverse: reverse,
-					transition: transition
+					transition: transition,
+					reverse: reverse
 				});
-			} else if (state.mode === 'driver') {
-				socket.send('sync', 'state', {
-					slide: state.slide,
-					step: state.step
+			} else {
+				sendSocketData('sync', 'state', {
+					slide: slide,
+					step: step
 				});
 			}
 		}
 	}
 
+	/**
+	* Triggers a global event for the API
+	* @param {String} event The event name
+	* @param {Object} data Data to pass to the event listeners
+	*/
+	function trigger(event, data) {
+		elements.window.trigger(namespaceEvent(event), data);
+	}
+
+	/**
+	* Binds an event handler to an API event
+	* @param {String} event The event to bind to
+	* @param {Function} callback The event listener add
+	*/
+	function on(event, callback) {
+		elements.window.on(namespaceEvent(event), callback);
+	}
+
+	/**
+	* Removes an event handler from the API
+	* @param {String} event The event to unbind
+	* @param {Function} callback The event listener to remove
+	*/
+	function off(event, callback) {
+		elements.window.off(namespaceEvent(event), callback);
+	}
+
+	/**
+	* Namespaces events so that they do not collide with real DOM events
+	* @param {String} event The event to namespace
+	* @return {String} The namespaced event
+	*/
 	function namespaceEvent(event) {
 		return 'tacion:' + event;
-	}
-
-	function trigger(event, data) {
-		machine.trigger(namespaceEvent(event), data);
-	}
-
-	function on(event, callback) {
-		machine.on(namespaceEvent(event), callback);
-	}
-
-	function off(event, callback) {
-		machine.off(namespaceEvent(event), callback);
 	}
 
 	function slideNode(html) {
@@ -516,72 +680,6 @@
 		} else {
 			return undefined;
 		}
-	}
-
-	function renderSlide(html) {
-		var slide   = slideNode(html);
-		var content = slide.find('[data-role=content]');
-		var sync    = slide.find('.sync');
-		var job     = $.Deferred();
-		var assets  = slide.find('link[href]').remove();
-		var alert   = slide.find('.alert');
-		var steps   = slide.find('[data-step]');
-		var headers = slide.find('[data-sync-theme]');
-		var pstep   = content.data('page-step');
-		var urls    = $.makeArray(assets.map(assetUrl));
-		var done    = function(){ job.resolve(slide); };
-
-		if (pstep) { steps.push(slide.attr('data-step', pstep).get(0)); }
-		slide.attr('id', content.attr('id')+'-page')
-			.data('steps', steps)
-			.data('headers', headers)
-			.data('alert', alert)
-			.appendTo(body).page();
-
-		if (sync.size()) { addSync(sync); }
-		if (alert.size()) {
-			alert.on('click', function(){
-				alert.removeClass('active');
-			});
-		}
-
-		if (urls.length) { loader({ load: urls, complete: done }); }
-		else { done(); }
-
-		return job.promise();
-	}
-
-	function slideError(xhr, error, ex) {
-		var messages = {
-			parsererror: 'Slide is mal-formed',
-			error: 'Client Error (' + ex + ')',
-			timeout: 'Request timed out',
-			abort: 'Request aborted'
-		};
-		alert('Unable to load slide: ' + messages[error]);
-	}
-
-	function loadSlide(path) {
-		var url = folder + '/' + path;
-		var job = $.Deferred();
-		$.get(url).then(function(html) {
-			renderSlide(html).then(job.resolve);
-		}).fail(slideError);
-		return job.promise();
-	}
-
-	function getSlide(index) {
-		var job = $.Deferred();
-		var slide = state.slides[index];
-		if (slide === undefined) {
-			job.reject(index);
-		} else if ($.type(slide) === 'string') {
-			state.slides[index] =
-				loadSlide(slide).then(job.resolve);
-		} else if (slide.then) {
-			slide.then(job.resolve);
-		}
-		return job.promise();
 	}
 
 	function elementVisible(el, padding) {
@@ -675,22 +773,8 @@
 		}
 	}
 
-	function socketSender(manifest) {
-		return function(channel, event, data) {
-			return $.ajax({
-				url: manifest.server,
-				type: 'POST',
-				contentType: 'application/json',
-				data: JSON.stringify({
-					channel: channel,
-					event: event,
-					data: data
-				})
-			});
-		};
-	}
-
 	function alert(message) {
+		spinner(false);
 		getSlide(state.slide).then(function(slide){
 			var alert = slide.data('alert');
 			if (alert) {
