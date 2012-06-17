@@ -8,9 +8,10 @@
 		data-end="\n\t\}"
 	></code></pre>
 	<ul>
-		<ol data-step="1" class="step opacity">1) First, the function get or creates a slide node from memory.</ol>
-		<ol data-step="2" class="step opacity">2) Then, the function passes the node into the jQuery mobile controller.</ol>
-		<ol data-step="3" class="step opacity">3) This will trigger the <a href="#slide=10">onChange</a> method, with the slide as the location.</ol>
-		<ol data-step="4" class="step opacity">4) As a result, the default controller logic will not be subverted and the slide will appear.</ol>
+		<ol data-step="1" class="step opacity">1) Informs all passengers that the slide has changed.</ol>
+		<ol data-step="2" class="step opacity">2) Gets (or creates) the slide element for the current request.</ol>
+		<ol data-step="3" class="step opacity">3) Instructs jQuery mobile to complete the request.</ol>
+		<ol data-step="4" class="step opacity">4) Transitions the slide to the correct step</ol>
+		<ol data-step="5" class="step opacity">5) Sends an event to the API</ol>
 	</ul>
 </div>

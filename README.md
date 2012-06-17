@@ -1,10 +1,9 @@
 Tacion.JS
 =========
-A real-time, mobile presentation framework
+A [jQuery Mobile](http://jquerymobile.com) framework for creating real-time presentations
 
 TODO
 ----
-- Document code
 - Tacion logo, iOS icons, and favicon
 - Add minified version of tacion.js
 - Add build script

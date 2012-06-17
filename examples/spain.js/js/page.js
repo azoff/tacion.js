@@ -37,7 +37,7 @@
 			}
 			if (end) {
 				length = end.length;
-				end = indexOf(text, end, start);
+				end = indexOf(text, end, start)-1;
 			}
 			if (end > start) {
 				length += end - start;
@@ -71,7 +71,7 @@
 	}
 
 	function checkForCode(event, data) {
-		var code = data.element.find('code:not(.rainbow)');
+		var code = data.page.find('code:not(.rainbow)');
 		if (code.size()) {
 			tacion.spinner('loading code...');
 			var jobs = $.makeArray(code.map(checkLoadFile));

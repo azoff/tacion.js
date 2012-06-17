@@ -1,3 +1,18 @@
+/**
+ * Tacion v0.1.0
+ *  A jQuery Mobile framework for creating real-time presentations
+ *  http://azoff.github.com/tacion.js
+ *
+ * Copyright 2012, Jonathan Azoff
+ * Dual licensed under the MIT or GPL Version 2 licenses.
+ *  http://jquery.org/license
+ *
+ * For usage and documentation, see the README file
+ *  http://azof.fr/M4iPck
+ *
+ * Date: Saturday, June 17th 2012
+ */
+
 /*global yepnope, Pusher */
 (function(global, dom, loader, Pusher, mobile, $){
 
@@ -15,14 +30,20 @@
 	* A map of properties used to globally keep track of presentation state
 	* @type {Object}
 	*/
-	var presentation = { };
+	var presentation = {
+		assets: { },
+		slide: 0,
+		step: 0
+	};
 
 	/**
-	* A map of objects required for syncing over pusher's web-socket service
+	* A map of objects used in the management and control of the pusher
+	* web-socket channel
 	* @type {Object}
 	*/
 	var sync = {
 		enabled: false,
+		switches: $(),
 		channels: {}
 	};
 
@@ -66,12 +87,12 @@
 		// no need to block, we can let this load in parallel
 		openSocket(manifest);
 
-		// set a slide template (if defined), then refresh the page
+		// set a slide template (if defined), then reload the page
 		if (manifest.template) {
-			loadFile(manifest.template).then(setTemplate).then(refresh);
+			loadFile(manifest.template).then(setTemplate).then(reload);
 		} else {
 			setTemplate('<div data-role="page">{{content}}</div>');
-			refresh();
+			reload();
 		}
 	}
 
@@ -89,7 +110,7 @@
 		passengerMode();
 
 		// disable all syncing - enables manual control
-		toggleSyncing(false, false);
+		setSyncing(false, false);
 
 		// if the user has provided an API key, then attempt to
 		// connect to the pusher web-socket service
@@ -124,12 +145,34 @@
 	}
 
 	/**
+	* Handler that is called whenever the pusher socket state changes
+	* @param {Object} state An object that describes the state of the socket
+	*/
+	function onConnectionChange(state) {
+		var errorMessages = {
+			'failed': 'Syncing support unavailable for this device.',
+			'disconnected': 'Connection lost! Will try again momentarily...'
+		};
+		// if the state change has caused an error, display a message
+		// and disable syncing across the presentation
+		if (state.current in errorMessages) {
+			setSyncing(false, false);
+			alert(errorMessages[event.current]);
+
+		// otherwise, re-enable syncing and hide any alerts.
+		} else if (state.current === 'connected') {
+			setSyncing(true, true);
+			alert(false);
+		}
+	}
+
+	/**
 	* Depending on the sync role, this method determines whether or not
 	* events are sent or received across the sync channel
 	* @param enabled Whether or not events will be sent or received
 	* @param switchable Whether or not the user can switch between manual and sync mode
 	*/
-	function toggleSyncing(enabled, switchable) {
+	function setSyncing(enabled, switchable) {
 
 		// set the sync theme based on the sync state
 		if (sync.enabled !== enabled) {
@@ -156,6 +199,95 @@
 		// finally, set the sync switch values for all the slides
 		var value = enabled ? 'syncing' : 'off';
 		sync.switches.val(value).slider('refresh');
+
+	}
+
+	/**
+	* Toggles the manual slide controller on and off. The manual slide controller
+	* is what allows the user to change slides by using input.
+	* @param {Boolean} on True to turn the controller on, false to shut it off.
+	*/
+	function toggleController(on) {
+		var manual = !!on;
+		// check to prevent multiple additions of event listeners...
+		if (sync.manual !== manual) {
+			var method = (sync.manual = manual) ? 'on' : 'off';
+			var events = 'swipeleft swiperight keyup';
+			// add or remove event listeners for the controller
+			elements.document[method](events, controller);
+		}
+	}
+
+	/**
+	* Interprets user triggered events and applies a corresponding action
+	* @param {Event} event A user triggered touch or keyboard event
+	*/
+	function controller(event) {
+		// ignore events on elements that have focus!
+		var ignored = '.ui-focus,.ui-focus *';
+		if (!$(event.target).is(ignored)) {
+			// swiping to the left moves to the next slide
+			if (event.type === 'swipeleft') { next(); }
+			// swiping to the right moves to the previous slide
+			else if (event.type === 'swiperight') { prev(); }
+			// the following keys also have actions associated with them
+			else {
+				switch(event.which) {
+					case 37: // left arrow
+						prev(); break;
+					case 39: // right arrow
+					case 32: // space bar
+						next(); break;
+				}
+			}
+		}
+	}
+
+	/**
+	* Transitions presentation to the next step, or slide
+	*/
+	function next() {
+
+		var slide = presentation.slide;
+		var step = presentation.step;
+		var nextSlide = slide + 1;
+		var nextStep = step + 1;
+
+		getSlide(slide).then(function(page){
+
+			var remainingSteps = page.data('steps').not('.active');
+
+			// if there are still steps to transition to, then move to the next step
+			if (remainingSteps.size() > 0) {
+				change(nextStep, slide);
+
+			// otherwise, move to the first step of the next slide
+			} else if (nextSlide < presentation.slideCount) {
+				change(0, nextSlide);
+			}
+
+		});
+
+	}
+
+	/**
+	* Transitions presentation to the previous step, or slide
+	*/
+	function prev() {
+
+		var slide     = presentation.slide;
+		var step      = presentation.step;
+		var prevSlide = slide - 1;
+		var prevStep  = step - 1;
+
+		// if the last step is still positive, then we are on the same slide
+		if (prevStep >= 0) {
+			change(prevStep, slide);
+
+		// otherwise, we have to transition to the last slide
+		} else if (prevSlide >= 0) {
+			change(0, prevSlide);
+		}
 
 	}
 
@@ -200,6 +332,8 @@
 		elements.body.addClass(sync.role = 'passenger');
 		elements.body.removeClass('driver');
 		addSocketListener('sync', 'state', syncState);
+		// passengers are only in manual mode if opted in
+		// or if the connection fails
 		toggleController(!!sync.manual);
 	}
 
@@ -212,6 +346,7 @@
 		elements.body.addClass(sync.role = 'driver');
 		elements.body.removeClass('passenger');
 		removeSocketListener('sync', 'state', syncState);
+		// drivers are always in manual mode
 		toggleController(true);
 	}
 
@@ -289,8 +424,18 @@
 	* @return {jQuery.Deferred} The deferred object for the request
 	*/
 	function loadFile(path, folder) {
+		return $.get(absolutePath(path, folder));
+	}
+
+	/**
+	* Gets an absolute path for a presentation relative file
+	* @param {String} path The relative file path
+	* @param {String} folder The folder to set for relative paths (optional)
+	* @return {String} An absolute path to the relative file
+	*/
+	function absolutePath(path, folder) {
 		if (folder) { presentation.rootFolder = folder; }
-		return $.get(presentation.rootFolder+'/'+path);
+		return presentation.rootFolder+'/'+path;
 	}
 
 	/**
@@ -305,7 +450,7 @@
 	* Reloads the current slide and step based
 	* off of the state of the URL hash
 	*/
-	function refresh() {
+	function reload() {
 		var current = urlState(location);
 		change(current.step, current.slide, {
 			transition: 'fade'
@@ -396,21 +541,25 @@
 
 		// drivers sync state with passengers on update
 		if (sync.role === 'driver') {
-			syncState(slide, step);
+			syncState({ slide: slide, step: step });
 		}
+
+		// create a list of required options
+		var required = {
+			dataUrl: data.toPage,
+			allowSamePageTransition: true,
+			reverse: slide < presentation.slide
+		};
 
 		// get the requested slide
 		getSlide(slide).then(function(page){
 
-			var defaults = {
-				dataUrl: data.toPage,
-				transition: 'none'
-			};
-
 			// scroll to the top and respect transitions on new slides
 			if (presentation.slide !== slide) {
-				defaults.transition = page.data('transition') || 'slide';
+				required.transition = page.data('transition') || 'slide';
 				scrollTo(0, 0);
+			} else {
+				required.transition = 'none';
 			}
 
 			// set the slide state for this user
@@ -418,10 +567,11 @@
 			presentation.step = step;
 
 			// instruct jQuery mobile to show the current slide
-			mobile.changePage(page, $.extend(defaults, data.options || {}));
+			var options = $.extend(data.options || {}, required);
+			mobile.changePage(page, options);
 
 			// display the correct step to the user
-			gotoStep(step, slide);
+			gotoStep(step, page);
 
 			// and inform the API that the slide has been updated
 			trigger('update', {
@@ -486,9 +636,16 @@
 		// used to track the render job
 		var job = $.Deferred();
 
-		// wraps the slide content with a template file
-		var slide   = wrapSlideContent(html);
-		var content = slide.find('[data-role=content]');
+		// interpolates the slide content into the template
+		var slide = applySlideTemplate(html);
+
+		// parse the slide content for shared elements
+		var content     = slide.find('[data-role=content]');
+		var alert       = slide.find('.alert');
+		var assets      = slide.find('link[href]').remove();
+		var steps       = slide.find('[data-step]');
+		var alternators = slide.find('[data-sync-theme]');
+		var contentId   = content.attr('id') || presentation.slide;
 
 		// the whole page might actually be a step
 		// (if the content defines a page step)
@@ -496,13 +653,6 @@
 		if (pageStep) {
 			steps.push(slide.attr('data-step', pageStep).get(0));
 		}
-
-		// parse the slide content for shared elements
-		var alert       = slide.find('.alert');
-		var assets      = slide.find('link[href]').remove();
-		var steps       = slide.find('[data-step]');
-		var alternators = slide.find('[data-sync-theme]');
-		var contentId   = content.attr('id') || presentation.slide;
 
 		// bind slide data to the slide, and add the slide to the page
 		slide.attr('id', contentId + '-page').data({
@@ -514,10 +664,10 @@
 		// add any sync switches to the global list
 		var syncSwitches = slide.find('.sync');
 		if (syncSwitches.size()) {
-			syncSwitches.each(addSyncSwitch);
+			syncSwitches.each(addSyncSwitch).change(toggleSyncing);
 		}
 
-		// bind click listener to alers
+		// bind click listener to alerts
 		if (alert.size()) {
 			alert.on('click', function(){
 				alert.removeClass('active');
@@ -525,7 +675,7 @@
 		}
 
 		// download any declared assets in the slide content
-		var urls = $.makeArray(assets.map(assetUrl));
+		var urls = $.makeArray(assets.map(toAssetUrl));
 		var done = function(){ job.resolve(slide); };
 		if (urls.length) {
 			loader({
@@ -538,6 +688,64 @@
 
 		return job.promise();
 
+	}
+
+	/**
+	* Maps asset elements to their absolute asset URL.
+	* Also prunes out previously loaded assets
+	* @param {Number} i The asset index to prune out
+	* @param {Element} asset The asset element to map
+	* @return {String|undefined} An asset URL, or undefined if the asset is to be pruned
+	*/
+	function toAssetUrl(i, asset) {
+		var path = $(asset).attr('href');
+		if (path in presentation.assets) {
+			return undefined;
+		} else {
+			presentation.assets[path] = true;
+			return absolutePath(path);
+		}
+	}
+
+	/**
+	* Adds a sync switch to the list of global sync switches
+	* @param {Integer} i The index of the added switch
+	* @param {Element} syncSwitch The DOM element to be added to the list
+	*/
+	function addSyncSwitch(i, syncSwitch) {
+		sync.switches.push(syncSwitch);
+		setSyncing(sync.enabled);
+	}
+
+	/**
+	* Globally toggles syncing for the presentation
+	* @param {Event} event The change event on a sync switch
+	*/
+	function toggleSyncing(event) {
+		var syncing = $(event.target).val();
+		setSyncing(syncing === 'syncing');
+	}
+
+	/**
+	* Interpolates slide content into a template. Also fills in declared constants
+	* @param content The content to interpolate
+	* @return {jQuery} The rendered jQuery element
+	*/
+	function applySlideTemplate(content) {
+		var pattern = /\{\{([a-z]+)\}\}/g;
+		var template = presentation.template;
+		// loop over matched keys and interpolate presentation constants
+		// as well as the content for the current slide
+		var html = template.replace(pattern, function(match, key){
+			if (key === 'content') {
+				return content;
+			} else if (key === 'index') {
+				return presentation.slide + 1;
+			} else if (key === 'count') {
+				return presentation.slideCount;
+			}
+		});
+		return $(html);
 	}
 
 	/**
@@ -564,9 +772,36 @@
 		});
 		// if the first converted step is off screen, then we
 		// scroll it into screen
-		if (target && !elementVisible(target.get(0), padding)) {
+		if (target && !elementVisible(target, padding)) {
 			scrollTo(target.offset().top-padding);
 		}
+	}
+
+	/**
+	* Determines if an element is on screen
+	* @param {jQuery} target The element to check
+	* @param {Number} padding The padding off of the bottom of the window to count out
+	* @return {Boolean} True if the element is on screen, otherwise false.
+	*/
+	function elementVisible(target, padding) {
+		var el = target.get(0);
+		var top = el.offsetTop;
+		var left = el.offsetLeft;
+		var width = el.offsetWidth;
+		var height = el.offsetHeight;
+
+		while(el.offsetParent) {
+			el = el.offsetParent;
+			top += el.offsetTop;
+			left += el.offsetLeft;
+		}
+
+		return (
+			top >= global.pageYOffset &&
+				left >= global.pageXOffset &&
+				(top + height) <= (global.pageYOffset + global.innerHeight - (padding||0)) &&
+				(left + width) <= (global.pageXOffset + global.innerWidth)
+			);
 	}
 
 	/**
@@ -580,7 +815,7 @@
 		var step = function(){
 			elements.window.trigger('resize');
 		};
-		elements.window.animate({
+		elements.html.animate({
 			scrollTop: scrollTop
 		}, {
 			duration: duration,
@@ -592,24 +827,17 @@
 	* Syncs the state between a driver and passengers.
 	* Calling this method as a driver sends the state to passengers.
 	* Calling as a passenger will set the current state to the provided values.
-	* @param {Number} slide The slide to change to
-	* @param {Number} step The step to go to
+	* @param {Object} state The state to either send or apply (depending on role)
 	*/
-	function syncState(slide, step) {
+	function syncState(state) {
+		// only sync state if syncing is enabled!
 		if (sync.enabled) {
+			// passengers will apply a new state
 			if (sync.role === 'passenger') {
-				var transition = slide !== presentation.slide ? 'slide' : 'none';
-				var reverse = slide < presentation.slide;
-				change(step, slide, {
-					allowSamePageTransition: true,
-					transition: transition,
-					reverse: reverse
-				});
+				change(state.step, state.slide);
+			// drivers send their state over the socket
 			} else {
-				sendSocketData('sync', 'state', {
-					slide: slide,
-					step: step
-				});
+				sendSocketData('sync', 'state', state);
 			}
 		}
 	}
@@ -650,172 +878,51 @@
 		return 'tacion:' + event;
 	}
 
-	function slideNode(html) {
-		var regex = /\{\{([a-z]+)\}\}/g;
-		var onMatch = function(match, key){
-			if (key === 'content') { return html; }
-			else if (key === 'index') { return state.slide+1; }
-			else if (key === 'count') { return state.count; }
-		};
-		return $(template.replace(regex, onMatch));
-	}
-
-	function changeSync(event) {
-		var sync = $(event.target);
-		toggleSyncing(sync.val() === 'syncing');
-	}
-
-	function addSync(sync) {
-		sync.each(function(){
-			syncs.push(this);
-		}).change(changeSync);
-		toggleSyncing(state.syncing);
-	}
-
-	function assetUrl(i, asset) {
-		var url = $(asset).attr('href');
-		if (!urlCache.hasOwnProperty(url)) {
-			urlCache[url] = true;
-			return folder + '/' + url;
-		} else {
-			return undefined;
-		}
-	}
-
-	function elementVisible(el, padding) {
-		var top = el.offsetTop;
-		var left = el.offsetLeft;
-		var width = el.offsetWidth;
-		var height = el.offsetHeight;
-
-		while(el.offsetParent) {
-			el = el.offsetParent;
-			top += el.offsetTop;
-			left += el.offsetLeft;
-		}
-
-		return (
-			top >= global.pageYOffset &&
-			left >= global.pageXOffset &&
-			(top + height) <= (global.pageYOffset + global.innerHeight - (padding||0)) &&
-			(left + width) <= (global.pageXOffset + global.innerWidth)
-		);
-	}
-
-	function next() {
-		var index = state.slide;
-		var step = state.step;
-		getSlide(index).then(function(slide){
-			var nextSlide = index + 1;
-			var maxSlide = state.count;
-			var nextStep = step + 1;
-			var steps = slide.data('steps').not('.active');
-			if (steps.size() > 0) {
-				change(nextStep, index, {
-					allowSamePageTransition: true,
-					transition: 'none'
-				});
-			} else {
-				if (nextSlide < maxSlide) {
-					change(0, nextSlide);
-				}
-			}
-		});
-	}
-
-	function prev() {
-		var index = state.slide;
-		var step = state.step;
-		getSlide(index).then(function(){
-			var prevSlide = index - 1;
-			var prevStep = step - 1;
-			if (prevStep < 0) {
-				if (prevSlide >= 0) {
-					change(0, prevSlide, {
-						reverse: true
-					});
-				}
-			} else {
-				change(prevStep, index, {
-					allowSamePageTransition: true,
-					transition: 'none'
-				});
-			}
-		});
-	}
-
-	function controller(event) {
-		var target = $(event.target);
-		if (!target.is('.ui-focus, .ui-focus *')) {
-			if (event.type === 'swipeleft') { next(); }
-			else if (event.type === 'swiperight') { prev(); }
-			else {
-				switch(event.which) {
-					case 37: // left
-					case 38: // up
-						prev(); break;
-					case 39: // right
-					case 40: // down
-					case 32: // space
-					case 13: // enter
-						next(); break;
-				}
-			}
-		}
-	}
-
-	function toggleController(on) {
-		var manual = !!on;
-		if (state.manual !== manual) {
-			var method = (state.manual = manual) ? 'on' : 'off';
-			var events = 'swipeleft swiperight keyup';
-			dom[method](events, controller);
-		}
-	}
-
+	/**
+	* Displays a message to the user in an alert box. If an alert box
+	* is defined in the slide markup, then that will be used over the
+	* native implementation
+	* @param {String|Boolean} message The message to alert to the user
+	*/
 	function alert(message) {
+
+		// hide any loader messages
 		spinner(false);
-		getSlide(state.slide).then(function(slide){
-			var alert = slide.data('alert');
+
+		// use native alerts if no alert is found in the slide markup
+		var alertFallback = function(){
+			if ($.type(message) === 'string') {
+				global.alert(message);
+			}
+		};
+
+		getSlide(presentation.slide).then(function(page){
+			// check for an alert element in the slide markup
+			var alert = page.data('alert');
 			if (alert) {
+				// if the message is a string, we show the alert
 				if ($.type(message) === 'string') {
 					alert.children('.message').text(message);
 					alert.addClass('active');
 					scrollTo(0);
+				// otherwise we hide the alert box
 				} else {
 					alert.removeClass('active');
 				}
-			} else if ($.type(message) === 'string') {
-				global.alert(message);
-			}
-		});
-	}
-
-	function onConnectionChange(event) {
-		var errorMessages = {
-			'failed': 'Syncing support unavailable for this device.',
-			'disconnected': 'Connection lost! Will try again momentarily...'
-		};
-		if (event.current in errorMessages) {
-			toggleSyncing(false, false);
-			alert(errorMessages[event.current]);
-		} else if (event.current === 'connected') {
-			toggleSyncing(true, true);
-			alert(false);
-		}
+			} else { alertFallback(); }
+		}).fail(alertFallback);
 	}
 
 	// Expose the public API
 	global.tacion = {
-		alert: alert,
-		next: next,
-		change: change,
-		off: off,
-		on: on,
-		prev: prev,
-		refresh: refresh,
+		alert:   alert,
+		change:  change,
+		next:    next,
+		off:     off,
+		on:      on,
+		prev:    prev,
 		spinner: spinner,
-		start: start
+		start:   start
 	};
 
 })(window, document, yepnope, Pusher, jQuery.mobile, jQuery);
