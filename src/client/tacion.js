@@ -555,11 +555,10 @@
 		getSlide(slide).then(function(page){
 
 			// scroll to the top and respect transitions on new slides
+			var optional = { transition: 'none' };
 			if (presentation.slide !== slide) {
-				required.transition = page.data('transition') || 'slide';
+				optional.transition = page.data('transition') || 'slide';
 				scrollTo(0, 0);
-			} else {
-				required.transition = 'none';
 			}
 
 			// set the slide state for this user
@@ -567,7 +566,8 @@
 			presentation.step = step;
 
 			// instruct jQuery mobile to show the current slide
-			var options = $.extend(data.options || {}, required);
+			var chosen = data.options || {};
+			var options = $.extend(optional, chosen, required);
 			mobile.changePage(page, options);
 
 			// display the correct step to the user
