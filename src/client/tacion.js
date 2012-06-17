@@ -8,7 +8,7 @@
  *  http://jquery.org/license
  *
  * For usage and documentation, see the README file
- *  http://azof.fr/M4iPck
+ *  http://azof.fr/tacionjs
  *
  * Date: Saturday, June 17th 2012
  */
