@@ -207,23 +207,52 @@ tacion's built-in functionality. Below, you will find a list of methods and thei
 associated documentation:
 
 - `tacion.alert(message)` Displays a message to the user in an alert box. If an alert box is defined in the slide template or content, then that will be used over the native implementation
-  - `String|Boolean` `message` The message to alert to the user. A booelan `false` value will close the alert.
+  - `message` `String|Boolean` The message to alert to the user. A booelan `false` value will close the alert.
 
 ```javascript
 tacion.alert('Whoops! An error has occurred.');
 ```
 
-- `tacion.change(step, slide)` Changes the slide (or step) by updating the URL hash
-  - `Number` `step` The step to change to
-  - `Number` `slide` The slide to change to
-  - `Object` `options` Any options to override for the pending transition (optional)
+- `tacion.change(step, slide, options)` Changes the slide (or step) by updating the URL hash
+  - `step` `Number` The step to change to
+  - `slide` `Number` The slide to change to
+  - `options` `Object` Any options to override for the pending transition (optional)
 
 ```javascript
 // go to the first step on the second slide, transition using the "flip" animation.
-tacion.alert(0, 1, {
+tacion.change(0, 1, {
 	transition: 'flip'
 });
 ```
+
+- `tacion.next()` Transitions presentation to the next step, or slide
+
+- `tacion.off(event, callback)` Removes an event handler from the API
+  - `event` `String` The event to unbind
+  - `callback` `Function` The event listener to remove
+
+```javascript
+// removes the "onupdate" handler from the "update" event 
+tacion.off('update', onupdate);
+```
+
+- `tacion.on(event, callback(event, state))` Adds an event handler to the API
+  - `event` `String` The event to bind the listener to
+    - ** Currently, tacion only supports the "update" event, 
+      which is triggered after a slide or step transition.
+  - `callback` `Function` The event listener to add, it receives the following parameters:
+    - `event` `jQuery.Event` An event object describing the triggered event
+    - `state` `Object` An object that provides accessors into the internal components. It
+      exposes the following properties:
+      - `slide` `Number` The index of the slide that was just transitioned to
+      - `step` `Number` The index of the step in the transitioned slide
+      - `page` `jQuery` The rendered slide element 
+
+```javascript
+// adds the "onupdate" handler to the "update" event 
+tacion.on('update', onupdate);
+```
+
 
 ```javascript
 // Tacions
