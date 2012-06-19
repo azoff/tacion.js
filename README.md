@@ -208,8 +208,21 @@ associated documentation:
 
 - `tacion.alert(message)` Displays a message to the user in an alert box. If an alert box is defined in the slide template or content, then that will be used over the native implementation
   - `String|Boolean` `message` The message to alert to the user. A booelan `false` value will close the alert.
+
 ```javascript
 tacion.alert('Whoops! An error has occurred.');
+```
+
+- `tacion.change(step, slide)` Changes the slide (or step) by updating the URL hash
+  - `Number` `step` The step to change to
+  - `Number` `slide` The slide to change to
+  - `Object` `options` Any options to override for the pending transition (optional)
+
+```javascript
+// go to the first step on the second slide, transition using the "flip" animation.
+tacion.alert(0, 1, {
+	transition: 'flip'
+});
 ```
 
 ```javascript
