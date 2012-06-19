@@ -252,23 +252,24 @@ tacion.on('update', function(event, state){
 });
 ```
 
+- `tacion.prev()` Transitions presentation to the previous step, or slide
+
+- `tacion.spinner(msgText)` Shows or hides a loading message in the UI
+  - `msgText` `String|Boolean` The text to show in the loading message, or false to hide it
 
 ```javascript
-// Tacions
-window.tacion = {
-	alert:   alert,
-	change:  change,
-	next:    next,
-	off:     off,
-	on:      on,
-	prev:    prev,
-	spinner: spinner,
-	start:   start
-};
+tacion.spinner('Loading Components');
 ```
 
-TODO
-----
+- `tacion.start(folder)` Starts a presentation by loading its manifest and initializing the presentation.
+  - `folder` `String` The folder that `manifest.json` lives in
+
+```javascript
+tacion.start('/my_presentation');
+```
+
+On the horizon
+--------------
 - Update README with documentation and usage
 - Create github site
   - tac.io
