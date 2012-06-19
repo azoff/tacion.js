@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<title>TacionJS - RealTime Mobile Presentations</title>
+	<meta name="description" content="A jQuery Mobile framework for creating real-time presentations">
+	<meta name="author" content="Jonathan Azoff">
+	<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Vollkorn"></link>
+	<script src="libs/yepnope.custom.min.js"></script>
+</head>
+<body>
+	<h1 style="font-family: Vollkorn, serif">tacion<strong style="color: red">JS</strong></h1>
+	<script>
+		(function(w, loader){
+			w._gaq    = [['_setAccount', 'UA-32644359-1'],['_trackPageview']];
+			w._errs   = ["4fd9a7ff67983f161000052a"];
+			w.onerror = function(){ _errs.push(arguments); };
+			w.ssl     = location.protocol === 'https:';
+			loader([{
+				load: '//d15qhc0lu1ghnk.cloudfront.net/beacon.js'
+			},{
+				load: '//' + (ssl ? 'ssl' : 'www') + '.google-analytics.com/ga.js'
+			}]);
+		})(window, yepnope);
+	</script>
+</body>
+</html>
