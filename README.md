@@ -4,7 +4,7 @@ A [jQuery Mobile](http://jquerymobile.com) framework for creating real-time pres
 
 Examples
 --------
-Currently, [the only example](http://azoff.github.com/tacion.js/examples/spain.js) is the one made for [SpainJS](http://spainjs.org). That being said, you are sincerely encouraged to [fork tacion](http://github.com/tacion.js/fork) and submit some more examples!
+Currently, [the only example](http://azoff.github.com/tacion.js/examples/spain.js) is the one made for [SpainJS](http://spainjs.org). That being said, you are sincerely encouraged to [fork tacion](http://github.com/azoff/tacion.js/fork) and submit some more examples!
 
 - [SpainJS Presentation](http://azoff.github.com/tacion.js/examples/spain.js)
 
@@ -22,14 +22,14 @@ In order to get started with tacion, the implementor must include it's dependenc
 
 ```html
 <!--- Add to near the top of <head> --->
-<link rel="stylesheet" href="http://code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.css">
+<link rel="stylesheet" href="//code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.css">
 
 <!--- Add near the bottom of <body> --->
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 <script src-"//code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.js"></script>
 ```
 
-That should take care of loading jQuery Mobile. The only other external dependency is [yepnope](http://yepnopejs.com), a conditional script loader that tacion will use to load the JavaScript and CSS for each slide. If you use [Modernizr](http://modernizr.com), chances are that you are already including it. Unfortunately, yepnope is no longer packaged with a CSS loader by default - so you will have to either include [the plugin](http://github.com/SlexAxton/blob/master/plugins/yepnope.css.js) yourself, or just include tacion's [custom build of yepnope](http://github.com/azoff/tacion.js/blob/master/libs/yepnope.custom.min.js):
+That should take care of loading jQuery Mobile. The only other external dependency is [yepnope](http://yepnopejs.com), a conditional script loader that tacion will use to load the JavaScript and CSS for each slide. If you use [Modernizr](http://modernizr.com), chances are that you are already including it. Unfortunately, yepnope is no longer packaged with a CSS loader by default - so you will have to either include [the plugin](http://github.com/SlexAxton/yepnope.js/blob/master/plugins/yepnope.css.js) yourself, or just include tacion's [custom build of yepnope](http://github.com/azoff/tacion.js/blob/master/libs/yepnope.custom.min.js):
 
 ```html
 <!--- Using tacion's custom build of yepnope --->
@@ -206,15 +206,8 @@ Tacion's public API was created to allow presenters to deeply integrate and exte
 tacion's built-in functionality. Below, you will find a list of methods and their
 associated documentation:
 
-`tacion.alert(message)`
-Displays a message to the user in an alert box. If an alert box is defined in the 
-slide template or content, then that will be used over the native implementation
-
-- `String|Boolean` `message` The message to alert to the user. A booelan `false` 
-  value will close the alert.
-
-Example:
-
+- `tacion.alert(message)` Displays a message to the user in an alert box. If an alert box is defined in the slide template or content, then that will be used over the native implementation
+  - `String|Boolean` `message` The message to alert to the user. A booelan `false` value will close the alert.
 ```javascript
 tacion.alert('Whoops! An error has occurred.');
 ```
