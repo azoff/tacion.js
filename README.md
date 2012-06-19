@@ -238,17 +238,18 @@ tacion.off('update', onupdate);
 
 - `tacion.on(event, callback(event, state))` Adds an event handler to the API
   - `event` `String` The event to bind the listener to
-  		- ** Currently, tacion only supports the "update" event, which is triggered after a slide or step transition.
+  		- Currently, tacion only supports the `"update"` event, which is triggered after a slide or step transition.
   - `callback` `Function` The event listener to add, it receives the following parameters:
   		- `event` `jQuery.Event` An event object describing the triggered event
-  		- `state` `Object` An object that provides accessors into the internal components. It exposes the following properties:
-  				- `slide` `Number` The index of the slide that was just transitioned to
-      			- `step` `Number` The index of the step in the transitioned slide
-  				- `page` `jQuery` The rendered slide element 
+  		- `state` `Object` An object that provides accessors into the internal components. 
 
 ```javascript
-// adds the "onupdate" handler to the "update" event 
-tacion.on('update', onupdate);
+// adds a handler to the "update" event 
+tacion.on('update', function(event, state){
+	console.log(state.slide); // index of current slide
+	console.log(state.step);  // index of current step
+	console.log(state.page);  // jQuery element of the current slide
+});
 ```
 
 
