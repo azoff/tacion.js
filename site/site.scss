@@ -1,0 +1,32 @@
+body {
+	font: 18px/1 Helvetica, Arial, Sans;
+	color: #444;
+	text-align: center;
+}
+
+h1, h2 {
+	font-family: Vollkorn, "Times New Roman", "Times New", Times, Serif
+	line-height: 1.2;
+	margin: 0 auto;
+}
+
+h1 { 
+	font-size: 10em;
+	color: #333;
+	span {
+		color: #666;
+	}
+}
+
+h2 {
+	font-size: 2em;
+	color: #999;
+}
+
+a {
+	color: #AAA;
+	text-decoration: none;
+	&:hover {
+		color: #666;
+	}
+}
