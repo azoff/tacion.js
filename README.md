@@ -1,12 +1,12 @@
-Tacion.JS
+tacionJS
 =========
 A [jQuery Mobile](http://jquerymobile.com) framework for creating real-time presentations
 
 Examples
 --------
-Currently, [the only example](http://azoff.github.com/tacion.js/examples/spain.js) is the one made for [SpainJS](http://spainjs.org). That being said, you are sincerely encouraged to [fork tacion](http://github.com/azoff/tacion.js/fork) and submit some more examples!
+Currently, [the only example](http://azoff.github.com/tacion.js/examples/spain.js) is the one made for [Spain.JS](http://spainjs.org). That being said, you are sincerely encouraged to [fork tacion](http://github.com/azoff/tacion.js/fork) and submit some more examples!
 
-- [SpainJS Presentation](http://azoff.github.com/tacion.js/examples/spain.js)
+- [Spain.JS Presentation](http://azoff.github.com/tacion.js/examples/spain.js)
 
 Licensing
 ---------
