@@ -4,7 +4,7 @@ A [jQuery Mobile](http://jquerymobile.com) framework for creating real-time pres
 
 Examples
 --------
-Currently, [the only example](http://azoff.github.com/tacion.js/examples/spain.js) is the one made for [Spain.JS](http://spainjs.org). That being said, you are sincerely encouraged to [fork tacion](http://github.com/azoff/tacion.js/fork) and submit some more examples!
+Currently, [the only example](http://azoff.github.com/tacion.js/examples/spain.js) is the one made for [Spain.JS](http://spainjs.org). The presentation is set up to be controlled by a presenter, so you will need to disable syncing in order to manually move between slides. Moving between slides can be done by use of the arrow keys, or swiping (for touch devices).
 
 - [Spain.JS Presentation](http://azoff.github.com/tacion.js/examples/spain.js)
 
@@ -68,13 +68,13 @@ The manifest file declares the slides in your presentation to tacion; it is the 
 ```json
 {
 	// this is a Pusher API key. It is optional and only necessary if you would like to enable
-    // syncing across people watching your presentation (a.k.a. passengers). Pusher is a socket
-    // WebService that tacion uses to do real-time communication. If you're interested in this
-    // functionality, check out the section on syncing below
+	// syncing across people watching your presentation (a.k.a. passengers). Pusher is a socket
+	// WebService that tacion uses to do real-time communication. If you're interested in this
+	// functionality, check out the section on syncing below
 	"pusher": "ff4d7585176a252fe649",
-	
+
 	// if you plan on sending real-time sync messages (see above), you need to define a server
-    // that can send messages. Tacion comes packaged with one such server; you can find it in
+	// that can send messages. Tacion comes packaged with one such server; you can find it in
 	// the 'src/server' folder.
 	"server": "http://127.0.0.1:8080",
 
@@ -84,7 +84,7 @@ The manifest file declares the slides in your presentation to tacion; it is the 
 	"template": "page.html",
 
 	// a list of presentation relative paths to content files for eac slide. each content file represents
-    // a new slide. For more information on content slide files, see the section below. 
+	// a new slide. For more information on content slide files, see the section below.
 	"slides": [
 		"relative/path/to/slide_1.html",
 		"relative/path/to/slide_two.html",
@@ -129,14 +129,14 @@ Slide templates are simple html files that are used to wrap the content of each 
 <div data-role="page">
 	<!-- include a CSS file if you have styles that you would like to include across all slides -->
 	<link rel="stylesheet" href="css/template.css">
-	
+
 	<!-- the same is true for a javascript, but make sure to include it as a link so that it is not executed! -->
 	<link rel="script" href="js/page.js">
-	
+
 	<!-- if you want a header, include a div with a "data-role" of "header"; "data-id" and "data-position" fix the header  -->
 	<!-- if you want to transition the header on sync, add a "data-sync-theme" to switch between -->
 	<div data-id="header" data-role="header" data-position="fixed" data-sync-theme="b">
-		
+
 		<!-- if you would like to allow switching between manual and sync mode, add this div anywhere in your markup -->
 		<div class="sync-control">
 			<select class="sync" data-role="slider" data-theme="c" data-mini="true">
@@ -144,7 +144,7 @@ Slide templates are simple html files that are used to wrap the content of each 
 				<option value="syncing">Sync</option>
 			</select>
 		</div>
-		
+
 		<-- The title of your presentation goes in the header -->
 		<h1>My Presentation</h1>
 	</div>
@@ -181,14 +181,14 @@ Slide content files contain the main content of each slide in your presentation.
 	<link rel="script" href="js/interactive.js">
 
 	<!-- your slide content goes here! -->
-	
+
 	<h1>My Super Slide!</h1>
 	<span>This slide is great because:</span>
 
 	<ul>
 		<!-- adding "data-step" to a node makes it a step in the slide -->
 		<li data-step="1">It can declare its own assets</li>
-		
+
 		<!-- steps represent stops in the slide before transitioning to the next slide --> 
 		<li data-step="2">It is cached in memory</li>
 
@@ -240,10 +240,10 @@ tacion.off('update', onupdate);
 
 - `tacion.on(event, callback(event, state))` Adds an event handler to the API
   - `event` `String` The event to bind the listener to
-  		- Currently, tacion only supports the `"update"` event, which is triggered after a slide or step transition.
+		- Currently, tacion only supports the `"update"` event, which is triggered after a slide or step transition.
   - `callback` `Function` The event listener to add, it receives the following parameters:
-  		- `event` `jQuery.Event` An event object describing the triggered event
-  		- `state` `Object` An object that provides accessors into the internal components. 
+		- `event` `jQuery.Event` An event object describing the triggered event
+		- `state` `Object` An object that provides accessors into the internal components.
 
 ```javascript
 // adds a handler to the "update" event 
@@ -272,13 +272,14 @@ tacion.start('/my_presentation');
 
 On the horizon
 --------------
+- Peer Review
+- Tag and version build
 - Add CasperJS Tests: http://casperjs.org/
   - Create tests directory
   - Test every method in public API
   - Add to travis CI
   - Add travis image to README.md
 - Add npm packaging?
-- Tag and version build
 - Create a video backup
 - Upgrade Errorception
   - https://mail.google.com/mail/?view=cm&fs=1&tf=1&source=mailto&to=rakeshpai@errorception.com
