@@ -1,32 +1,49 @@
+@import "compass/css3/transition";
+@import "compass/css3/opacity";
+
 body {
 	font: 18px/1 Helvetica, Arial, Sans;
-	color: #444;
 	text-align: center;
+	min-width: 36em;
+	color: #444;
 }
 
 h1, h2 {
-	font-family: Vollkorn, "Times New Roman", "Times New", Times, Serif
+	font-weight: 200;
 	line-height: 1.2;
 	margin: 0 auto;
 }
 
 h1 { 
 	font-size: 10em;
-	color: #333;
+	font-family: Vollkorn, "Times New Roman", "Times New", Times, Serif;
 	span {
-		color: #666;
+		color: #C00;
 	}
 }
 
 h2 {
-	font-size: 2em;
+	font-size: 1.4em;
 	color: #999;
 }
 
-a {
+.links {
+	color: #CCC;
+	margin: 2em 0;
+	a { margin: 0 0.5em; }
+}
+
+.credits {
 	color: #AAA;
+	font-size: 0.8em;
+}
+
+a {
+	color: #C00;
+	font-size: 1em;
 	text-decoration: none;
+	@include transition(color 500ms);
 	&:hover {
-		color: #666;
+		color: #444;
 	}
 }

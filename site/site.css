@@ -1,0 +1,62 @@
+/* line 4, site.scss */
+body {
+  font: 18px/1 Helvetica, Arial, Sans;
+  text-align: center;
+  min-width: 36em;
+  color: #444;
+}
+
+/* line 11, site.scss */
+h1, h2 {
+  font-weight: 200;
+  line-height: 1.2;
+  margin: 0 auto;
+}
+
+/* line 17, site.scss */
+h1 {
+  font-size: 10em;
+  font-family: Vollkorn, "Times New Roman", "Times New", Times, Serif;
+}
+/* line 20, site.scss */
+h1 span {
+  color: #C00;
+}
+
+/* line 25, site.scss */
+h2 {
+  font-size: 1.4em;
+  color: #999;
+}
+
+/* line 30, site.scss */
+.links {
+  color: #CCC;
+  margin: 2em 0;
+}
+/* line 33, site.scss */
+.links a {
+  margin: 0 0.5em;
+}
+
+/* line 36, site.scss */
+.credits {
+  color: #AAA;
+  font-size: 0.8em;
+}
+
+/* line 41, site.scss */
+a {
+  color: #C00;
+  font-size: 1em;
+  text-decoration: none;
+  -webkit-transition: color 500ms;
+  -moz-transition: color 500ms;
+  -ms-transition: color 500ms;
+  -o-transition: color 500ms;
+  transition: color 500ms;
+}
+/* line 46, site.scss */
+a:hover {
+  color: #444;
+}
