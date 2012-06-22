@@ -15,9 +15,12 @@ Tacion is licensed to be compatible with jQuery, and hence is dual-licensed unde
 - [GPL License (v2)](http://github.com/azoff/tacion.js/blob/master/GPL-LICENSE.md)
 - [MIT License](http://github.com/azoff/tacion.js/blob/master/MIT-LICENSE.md)
 
+Feature Requests and Bug Reports
+--------------------------------
+If you would like to submit a bug report or suggest a feature to add to tacion, then please use the [official tracker](https://github.com/azoff/tacion.js/issues). If you would like to contribute to the project, please [forking the project](https://github.com/azoff/tacion.js), make your changes, and submit a pull request.
+
 Getting Started
 ---------------
-
 In order to get started with tacion, the implementor must include it's dependencies. Of course, the first obvious dependency is [jQuery Mobile](http://jquerymobile.com). To include jQuery mobile, just add the following markup to your source code:
 
 ```html
@@ -56,7 +59,6 @@ That's it! If you made it this far, tacion should begin loading your presentatio
 
 The Presentation Folder
 -----------------------
-
 The presentation folder should contain all the html files that compose your slides, as well as any assets your slides may require. The file paths realtive to the presentation folder are left up to the implementor, so long as a valid `manifest.json` file lives in its root. This file will be used by tacion to determine where to load slides, and what order to load them in. The next section breaks down the manifest file, and explains its internal definitions.
 
 The Manifest File (manifest.json)
@@ -270,11 +272,6 @@ tacion.start('/my_presentation');
 
 On the horizon
 --------------
-- Update README with documentation and usage
-- Create github site
-  - tac.io
-  - http://www.juicebox.net/img/demo-home.jpg
-- Tacion logo, iOS icons, and favicon
 - Add CasperJS Tests: http://casperjs.org/
   - Create tests directory
   - Test every method in public API
@@ -288,3 +285,4 @@ On the horizon
 - Upgrade pusher account
 - Upgrade webstorm
 - Add to site and cv
+- Improve landing site (tac.io?)
