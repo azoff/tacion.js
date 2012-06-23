@@ -106,9 +106,6 @@
 	*/
 	function openSocket(manifest) {
 
-		// pessimistically assume that the user is following along
-		passengerMode();
-
 		// disable all syncing - enables manual control
 		setSyncing(false, false);
 
@@ -118,6 +115,9 @@
 
 			// create a reference to the pusher API
 			sync.api = new Pusher(manifest.pusher, { encrypted: true });
+
+			// pessimistically assume that the user is following along
+			passengerMode();
 
 			// monitor the API connection for the duration of the presentation
 			addSocketListener('connection', 'state_change', onConnectionChange);
@@ -141,7 +141,14 @@
 				});
 
 			}
+
+		} else {
+
+			// if no pusher API key is provided, default to passenger mode
+			passengerMode();
+
 		}
+
 	}
 
 	/**
