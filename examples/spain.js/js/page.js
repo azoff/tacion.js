@@ -41,9 +41,6 @@
 			}
 			if (end > start) {
 				length += end - start;
-				header += ':' + start + '-' + end;
-			} else if (start) {
-				header += ':' + start;
 			}
 			text = text.substr(start, length);
 			if (unindent > 0) {
@@ -53,7 +50,9 @@
 			}
 			text = header + '\n\n' + text.replace(/\t/g, '   ');
 			code.text(text);
-			highlighter.color(code);
+			setTimeout(function(){
+				highlighter.color(code);
+			}, 250);
 		};
 	}
 
