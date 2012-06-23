@@ -1,22 +1,10 @@
 <div id="code-opensocket" data-role="content">
 	<h1>Creating the Real-Time Channel</h1>
-	<ul>
-		<li class="step opacity" data-step="1">Assuming you have a Pusher account, and you have added your API key
-			to the manifest...</li>
-		<li class="step opacity" data-step="2">Tacion attempts to setup the channel upon
-			<a href="/#slide=9">init</a>:</li>
-	</ul>
-	<pre class="step opacity" data-step="2"><code
+	<pre class="step opacity" data-step="1"><code
 		data-language="javascript"
 		data-unindent="1"
 		data-file="../../src/client/tacion.js"
 		data-start="function openSocket\("
 		data-end="\n\t\}"
 	></code></pre>
-	<ul>
-		<li class="step opacity" data-step="3">A base connection listener is added to handle connection failure and
-			other state change events.</li>
-		<li class="step opacity" data-step="4">Tacion also attempts to connect to a server if one is defined.
-			Successfully connecting implies that the current user is also the driver!</li>
-	</ul>
 </div>
