@@ -45,17 +45,9 @@
 				if (!jQuery.mobile) { yepnope('libs/jquery.mobile-1.1.0.min.js'); }
 			}
 		},{
-			load: '../../src/client/tacion.js',
+			load: '../../src/client/tacion.min.js',
 			complete: function(){
 				tacion.start('.');
-
-				// Enable pusher logging - don't include this in production
-				Pusher.log = function(message) {
-					if (window.console && window.console.log) window.console.log(message);
-				};
-
-				// Flash fallback logging - don't include this in production
-				WEB_SOCKET_DEBUG = true;
 			}
 		},{
 			load: '//' + (ssl ? 'ssl' : 'www') + '.google-analytics.com/ga.js'

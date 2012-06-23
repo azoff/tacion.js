@@ -272,10 +272,7 @@ tacion.start('/my_presentation');
 
 On the horizon
 --------------
-- Fix sync channel!
-- Replace pulse with an icon
 - Interpolate a system diagram
-- Tag and version build
 - Add CasperJS Tests: http://casperjs.org/
   - Create tests directory
   - Test every method in public API

@@ -184,8 +184,7 @@
 		// set the sync theme based on the sync state
 		if (sync.enabled !== enabled) {
 			sync.enabled = enabled;
-			if (enabled) { alternateSyncThemes(); }
-			else         { resetSyncTheme();     }
+			toggleSyncTheme(enabled);
 			if (sync.role === 'passenger') {
 				toggleController(!enabled);
 			}
@@ -302,28 +301,13 @@
 	* Alternates the theme of sync elements (like the header, if defined).
 	* Used to show that sync mode is on.
 	*/
-	function alternateSyncThemes() {
-		if (sync.enabled) {
-			getSlide(presentation.slide).then(function(slide){
-				var alternators = slide.data('alternators');
-				var theme = 'ui-bar-' + alternators.data('sync-theme');
-				alternators.toggleClass(theme);
-				setTimeout(alternateSyncThemes, 2000);
-			});
-		}
-	}
-
-	/**
-	* Resets the theme of the sync elements. Used to show that the
-	* manual mode is on.
-	*/
-	function resetSyncTheme() {
+	function toggleSyncTheme(on) {
 		$.each(presentation.slides, function(index, gotSlide){
 			if (gotSlide.then) {
 				gotSlide.then(function(slide){
 					var alternators = slide.data('alternators');
 					var theme = 'ui-bar-' + alternators.data('sync-theme');
-					alternators.removeClass(theme);
+					alternators.toggleClass(theme, on);
 				});
 			}
 		});
