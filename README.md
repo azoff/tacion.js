@@ -273,10 +273,7 @@ tacion.start('/my_presentation');
 On the horizon
 --------------
 - Fix sync channel!
-- Remove character numbers
-- Remove summary for code snippets with comments
 - Replace pulse with an icon
-- Show a graph of the system
 - Interpolate a system diagram
 - Tag and version build
 - Add CasperJS Tests: http://casperjs.org/
