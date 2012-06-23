@@ -551,6 +551,10 @@
 			reverse: slide < presentation.slide
 		};
 
+		// set the slide state for this user
+		presentation.slide = slide;
+		presentation.step = step;
+
 		// get the requested slide
 		getSlide(slide).then(function(page){
 
@@ -560,10 +564,6 @@
 				optional.transition = page.data('transition') || 'slide';
 				scrollTo(0, 0);
 			}
-
-			// set the slide state for this user
-			presentation.slide = slide;
-			presentation.step = step;
 
 			// instruct jQuery mobile to show the current slide
 			var chosen = data.options || {};
@@ -734,6 +734,7 @@
 	function applySlideTemplate(content) {
 		var pattern = /\{\{([a-z]+)\}\}/g;
 		var template = presentation.template;
+
 		// loop over matched keys and interpolate presentation constants
 		// as well as the content for the current slide
 		var html = template.replace(pattern, function(match, key){
