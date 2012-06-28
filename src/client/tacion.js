@@ -715,6 +715,7 @@
 	function toggleSyncing(event) {
 		var syncing = $(event.target).val();
 		setSyncing(syncing === 'syncing');
+		elements.body.focus();
 	}
 
 	/**
