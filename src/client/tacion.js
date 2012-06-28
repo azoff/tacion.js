@@ -1,5 +1,5 @@
 /**
- * Tacion v0.1.0
+ * Tacion v0.1.1
  *  A jQuery Mobile framework for creating real-time presentations
  *  http://azoff.github.com/tacion.js
  *
