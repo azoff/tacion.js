@@ -1,5 +1,5 @@
 /**
- * Tacion v0.1.1
+ * Tacion v0.1.2
  *  A jQuery Mobile framework for creating real-time presentations
  *  http://azoff.github.com/tacion.js
  *
@@ -10,7 +10,7 @@
  * For usage and documentation, see the README file
  *  http://azof.fr/tacionjs
  *
- * Date: Saturday, June 17th 2012
+ * Date: Friday, June 29th 2012
  */
 
 /*global yepnope, Pusher */
