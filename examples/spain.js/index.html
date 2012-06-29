@@ -46,9 +46,7 @@
 			}
 		},{
 			load: '../../src/client/tacion.min.js',
-			complete: function(){
-				tacion.start('.');
-			}
+			complete: function() { tacion.start('.'); }
 		},{
 			load: '//' + (ssl ? 'ssl' : 'www') + '.google-analytics.com/ga.js'
 		}]);

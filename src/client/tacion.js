@@ -42,7 +42,7 @@
 	* @type {Object}
 	*/
 	var sync = {
-		enabled: false,
+		role: 'passenger',
 		switches: $(),
 		channels: {}
 	};
@@ -97,7 +97,7 @@
 	}
 
 	/**
-	* Attempts to connect to the pusher web-socket service. By default,
+	* Attempts to connect to the pusher real-time service. By default,
 	* the method will put you in passenger mode. However, if a server is
 	* defined in the manifest, and you are able to connect to it, then
 	* it will put you in driver mode
@@ -196,11 +196,7 @@
 		}
 
 		// enable or disable the sync switches
-		if (sync.switchable) {
-			sync.switches.slider('enable');
-		} else {
-			sync.switches.slider('disable');
-		}
+		sync.switches.slider(sync.switchable ? 'enable' : 'disable');
 
 		// finally, set the sync switch values for all the slides
 		var value = enabled ? 'syncing' : 'off';
@@ -542,6 +538,12 @@
 			reverse: slide < presentation.slide
 		};
 
+		// create a list of optional options
+		var newSlide = presentation.slide !== slide;
+		var optional = {
+			transition: newSlide ? 'slide' : 'none'
+		};
+
 		// set the slide state for this user
 		presentation.slide = slide;
 		presentation.step = step;
@@ -549,16 +551,18 @@
 		// get the requested slide
 		getSlide(slide).then(function(page){
 
-			// scroll to the top and respect transitions on new slides
-			var optional = { transition: 'none' };
-			if (presentation.slide !== slide) {
-				optional.transition = page.data('transition') || 'slide';
-				scrollTo(0, 0);
+			// the default transition is "slide" but pages can provide their
+			// own defaults
+			if (page.data('transition')) {
+				optional.transition = page.data('transition');
 			}
 
+			// reset scroll before switching to new slides
+			if (newSlide) { scrollTo(0, 0); }
+
 			// instruct jQuery mobile to show the current slide
-			var chosen = data.options || {};
-			var options = $.extend(optional, chosen, required);
+			var requested = data.options || {};
+			var options = $.extend(optional, requested, required);
 			mobile.changePage(page, options);
 
 			// display the correct step to the user
@@ -763,8 +767,8 @@
 				element.removeClass('active');
 			}
 		});
-		// if the first converted step is off screen, then we
-		// scroll it into screen
+
+		// check to scroll to next step
 		if (target && !elementVisible(target, padding)) {
 			scrollTo(target.offset().top-padding);
 		}
