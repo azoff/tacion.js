@@ -17,7 +17,7 @@ Tacion is licensed to be compatible with jQuery, and hence is dual-licensed unde
 
 Feature Requests and Bug Reports
 --------------------------------
-If you would like to submit a bug report or suggest a feature to add to tacion, then please use the [official tracker](https://github.com/azoff/tacion.js/issues). If you would like to contribute to the project, please [forking the project](https://github.com/azoff/tacion.js), make your changes, and submit a pull request.
+If you would like to submit a bug report or suggest a feature to add to tacion, then please use the [official tracker](https://github.com/azoff/tacion.js/issues). If you would like to contribute to the project, please [fork the project](https://github.com/azoff/tacion.js), make your changes, and submit a pull request.
 
 Getting Started
 ---------------
@@ -67,24 +67,32 @@ The manifest file declares the slides in your presentation to tacion; it is the 
 
 ```json
 {
-	// this is a Pusher API key. It is optional and only necessary if you would like to enable
-	// syncing across people watching your presentation (a.k.a. passengers). Pusher is a socket
-	// WebService that tacion uses to do real-time communication. If you're interested in this
-	// functionality, check out the section on syncing below
+	/**
+	* this is a Pusher API key. It is optional and only necessary if you would like to enable
+	* syncing across people watching your presentation (a.k.a. passengers). Pusher is a socket
+	* WebService that tacion uses to do real-time communication. If you're interested in this
+	* functionality, check out the section on syncing below
+	*/
 	"pusher": "ff4d7585176a252fe649",
 
-	// if you plan on sending real-time sync messages (see above), you need to define a server
-	// that can send messages. Tacion comes packaged with one such server; you can find it in
-	// the 'src/server' folder.
+	/**
+	* if you plan on sending real-time sync messages (see above), you need to define a server
+	* that can send messages. Tacion comes packaged with one such server; you can find it in
+	* the 'src/server' folder.
+	*/
 	"server": "http://127.0.0.1:8080",
 
-	// the presentation relative path to the template file for each slide. template files wrap each slide
-	// content file, saving you on re-typing markup. For more information on template files, see the section
-	// below 
+	/**
+	* the presentation relative path to the template file for each slide. template files wrap each slide
+	* content file, saving you on re-typing markup. For more information on template files, see the section
+	* below
+	*/
 	"template": "page.html",
 
-	// a list of presentation relative paths to content files for eac slide. each content file represents
-	// a new slide. For more information on content slide files, see the section below.
+	/**
+	* a list of presentation relative paths to content files for eac slide. each content file represents
+	* a new slide. For more information on content slide files, see the section below.
+	*/
 	"slides": [
 		"relative/path/to/slide_1.html",
 		"relative/path/to/slide_two.html",
