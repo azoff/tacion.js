@@ -48,11 +48,8 @@
 					text = text.replace(/\t(\t*)/g, '$1');
 				}
 			}
-			text = header + '\n\n' + text.replace(/\t/g, '   ');
-			code.text(text);
-			setTimeout(function(){
-				highlighter.color(code);
-			}, 250);
+			text = header + '\n\n' + text;
+			highlighter.highlightBlock(code.text(text).get(0), '   ');
 		};
 	}
 
@@ -64,7 +61,7 @@
 			code.text('Loading ' + basename + '...');
 			return loadFile(file).then(parseCode(code, basename));
 		} else {
-			highlighter.color(code);
+			highlighter.highlightBlock(code.get(0));
 			return undefined;
 		}
 	}
@@ -82,4 +79,4 @@
 
 	tacion.on('update', checkForCode);
 
-})(tacion, Rainbow);
+})(tacion, hljs);

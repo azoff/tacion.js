@@ -49,7 +49,8 @@ a {
 
 pre {
 	white-space: pre-wrap;
-	font-size: 1em !important;
+	font-size: 1.2em;
+	font-weight: bold;
 	@include border-radius(5px);
 	code {
 		@include text-shadow(0 0 0 transparent !important);
