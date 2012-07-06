@@ -1,5 +1,5 @@
 /**
- * Tacion v0.1.2
+ * Tacion v0.1.3
  *  A jQuery Mobile framework for creating real-time presentations
  *  http://azoff.github.com/tacion.js
  *
@@ -10,7 +10,7 @@
  * For usage and documentation, see the README file
  *  http://azof.fr/tacionjs
  *
- * Date: Friday, June 29th 2012
+ * Date: Thursday, July 6th 2012
  */
 
 /*global yepnope, Pusher */
@@ -157,8 +157,8 @@
 	*/
 	function onConnectionChange(state) {
 		var errorMessages = {
-			'failed': 'Syncing support unavailable for this device.',
-			'disconnected': 'Connection lost! Will try again momentarily...'
+			failed: 'Syncing support unavailable for this device.',
+			disconnected: 'Connection lost! Will try again momentarily...'
 		};
 		// if the state change has caused an error, display a message
 		// and disable syncing across the presentation
@@ -292,6 +292,12 @@
 		}
 
 	}
+	
+	function applySyncTheme(slide, on) {
+        var alternators = slide.data('alternators');
+		var theme = 'ui-bar-' + alternators.data('sync-theme');
+		alternators.toggleClass(theme, on);
+	}
 
 	/**
 	* Alternates the theme of sync elements (like the header, if defined).
@@ -301,9 +307,7 @@
 		$.each(presentation.slides, function(index, gotSlide){
 			if (gotSlide.then) {
 				gotSlide.then(function(slide){
-					var alternators = slide.data('alternators');
-					var theme = 'ui-bar-' + alternators.data('sync-theme');
-					alternators.toggleClass(theme, on);
+				    applySyncTheme(slide, on);
 				});
 			}
 		});
@@ -661,6 +665,9 @@
 		if (syncSwitches.size()) {
 			syncSwitches.each(addSyncSwitch).change(toggleSyncing);
 		}
+		
+		// set the header style
+		applySyncTheme(slide, sync.enabled);
 
 		// bind click listener to alerts
 		if (alert.size()) {
