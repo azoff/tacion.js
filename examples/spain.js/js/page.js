@@ -27,7 +27,6 @@
 			var start = code.data('start');
 			var end = code.data('end');
 			var unindent = parseInt(code.data('unindent')||0, 10);
-			var header = '// ' + basename;
 			var length;
 			if (start) {
 				start = indexOf(text, start);
@@ -48,7 +47,6 @@
 					text = text.replace(/\t(\t*)/g, '$1');
 				}
 			}
-			text = header + '\n\n' + text;
 			highlighter.highlightBlock(code.text(text).get(0), '   ');
 		};
 	}

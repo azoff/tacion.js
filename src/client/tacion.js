@@ -545,7 +545,7 @@
 		// create a list of optional options
 		var newSlide = presentation.slide !== slide;
 		var optional = {
-			transition: newSlide ? 'slide' : 'none'
+			transition: newSlide ? 'fade' : 'none'
 		};
 
 		// set the slide state for this user
