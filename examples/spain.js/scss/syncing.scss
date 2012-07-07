@@ -3,13 +3,14 @@
 
 #syncing {
 	.pusher-logo {
-		position: relative;
+		position: absolute;
 		background: url('../img/pusher-logo.png') top left no-repeat scroll transparent;
-		left: -320px;
+		left: -200%;
 		width: 320px;
 		height: 196px;
+		margin-left: -160px;
 		&.active {
-			left: -1em;
+			left: 50%;
 			 @include transition(left 1s);
 		}
 	}

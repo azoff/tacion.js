@@ -2,12 +2,10 @@
 	<link rel="stylesheet" href="css/syncing.css">
 	<h1>Keeping everything in sync</h1>
 	<ul>
-		<li class="step opacity" data-step="1">For every step, on every slide, tacion needs to keep everyone in sync.</li>
-		<li class="step opacity" data-step="2">This is done by broadcasting the driver's state to every passenger's device.</li>
-		<li class="step opacity" data-step="3">To make this as easy as possible, Tacion piggy-backs on
-			<a href="http://pusher.com">Pusher's Real-Time Service</a></li>
-		<li class="step opacity" data-step="4">Using this feature is optional (see <a href="https://github.com/azoff/tacion.js#syncing-and-the-pusher-webservice">the docs</a>), but you should
-			<a href="https://app.pusherapp.com/accounts/sign_up">create an account</a> if you plan on using it.</li>
+		<li>For every step, on every slide, tacion needs to keep everyone in sync.</li>
+		<li class="step opacity" data-step="1">This is done by broadcasting the <strong>driver</strong>'s state to every <strong>passenger</strong>'s device.</li>
+		<li class="step opacity" data-step="2">To make this as easy as possible, Tacion uses <a href="http://pusher.com">Pusher</a> to handle syncing.</li>
+		<li class="step opacity" data-step="3">Using this feature is optional, as not all presentations may need syncing.</li>
 	</ul>
-	<div data-step="3" class="pusher-logo"></div>
+	<div data-step="2" class="pusher-logo"></div>
 </div>

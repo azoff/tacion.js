@@ -56,18 +56,19 @@
 
 		// start a job to wait for document ready
 		var documentReady = $.Deferred();
-		elements.document = $(documentReady.resolve).on('pagebeforechange', onChange);
 
-		// cache DOM elements then the document is ready
+		// cache DOM elements once the document is ready
+		elements.document = $(documentReady.resolve);
 		documentReady.then(function(){
 			spinner('loading presentation');
 			elements.body = $(dom.body);
-			elements.html = elements.body.closest('html').andSelf();
+			elements.html = elements.body.closest('html').andSelf();			
 		});
 
-		// initialize tacion once we have a manifest file
+		// load a definition file for the presentation
 		var manifestLoaded = loadFile('manifest.json', folder);
 		$.when(manifestLoaded, documentReady).then(function(args){
+			// and, finally, start this puppy
 			init(args.shift());
 		});
 
@@ -83,16 +84,18 @@
 		presentation.slides     = manifest.slides;
 		presentation.slideCount = manifest.slides.length;
 
-		// try to connect the pusher web-socket service.
+		// try to connect the syncing channel.
 		// no need to block, we can let this load in parallel
 		openSocket(manifest);
 
-		// set a slide template (if defined), then reload the page
+		// set a slide template (if defined), then bootstrap the page
 		if (manifest.template) {
-			loadFile(manifest.template).then(setTemplate).then(reload);
+			loadFile(manifest.template)
+				.then(setTemplate)
+				.then(bootstrap);
 		} else {
 			setTemplate('<div data-role="page">{{content}}</div>');
-			reload();
+			bootstrap();
 		}
 	}
 
@@ -105,50 +108,46 @@
 	*                          are the 'pusher' and 'server' values.
 	*/
 	function openSocket(manifest) {
-
-		// disable all syncing - enables manual control
+		// pessimistically disable syncing mode and all sync toggles
 		setSyncing(false, false);
 
-		// if the user has provided an API key, then attempt to
-		// connect to the pusher web-socket service
-		if (manifest.pusher) {
-
-			// create a reference to the pusher API
-			sync.api = new Pusher(manifest.pusher, { encrypted: true });
-
-			// pessimistically assume that the user is following along
-			passengerMode();
-
-			// monitor the API connection for the duration of the presentation
-			addSocketListener('connection', 'state_change', onConnectionChange);
-
-			// now, let's check if this user qualifies to drive the presentation
+		// now check to see if the user would like to enable syncing mode
+		if (manifest.api_key) {
+			
+			// if the user is not the driver, we can use this function
+			// to put the driver in syncing passenger mode
+			var syncingPassengerMode = function(){ 
+				sync.socket = new Pusher(manifest.api_key, { encrypted: true });
+				addSocketListener('connection', 'state_change', onConnectionChange);
+				passengerMode();
+			};
+			
+			// if the user is the driver, we can use this function
+			// to put the driver in syncing driver mode
+			var syncingDriverMode = function() {
+				sync.server = manifest.server;
+				setSyncing(true, true);
+				driverMode();
+			};
+			
+			// only enable driver mode if a server is defined, exists, 
+			// and responds with a matching API key!
 			if (manifest.server) {
-
-				// attempt to communicate with the defined server
 				$.getJSON(manifest.server).then(function(data){
-
-					// if the server responds with the correct API key,
-					// then we are safe to assume that the current user is
-					// driving the presentation
-					if (data && data.api_key === manifest.pusher) {
-						// cache a reference to the valid server
-						sync.server = manifest.server;
-						// and mark this user as the slide driver
-						driverMode();
+					if (data && data.api_key === manifest.api_key) {
+						syncingDriverMode();
+					} else {
+						syncingPassengerMode();
 					}
-
-				});
-
+				}).fail(syncingPassengerMode);
+			} else {
+				syncingPassengerMode();
 			}
-
+		
+		// if no pusher API key is provided, non-syncing passenger mode
 		} else {
-
-			// if no pusher API key is provided, default to passenger mode
 			passengerMode();
-
 		}
-
 	}
 
 	/**
@@ -323,8 +322,6 @@
 		elements.body.addClass(sync.role = 'passenger');
 		elements.body.removeClass('driver');
 		addSocketListener('sync', 'state', syncState);
-		// passengers are only in manual mode if opted in
-		// or if the connection fails
 		toggleController(!!sync.manual);
 	}
 
@@ -336,8 +333,6 @@
 	function driverMode() {
 		elements.body.addClass(sync.role = 'driver');
 		elements.body.removeClass('passenger');
-		removeSocketListener('sync', 'state', syncState);
-		// drivers are always in manual mode
 		toggleController(true);
 	}
 
@@ -348,7 +343,7 @@
 	* @param {Function} callback The handler for when the event is fired
 	*/
 	function addSocketListener(channelName, event, callback) {
-		if (channelName && sync.api) {
+		if (channelName && sync.socket) {
 			var channel = getOrCreateChannel(channelName);
 			if (event && callback) {
 				channel.bind(event, callback);
@@ -363,7 +358,7 @@
 	* @param {Function} callback The handler to remove
 	*/
 	function removeSocketListener(channelName, event, callback) {
-		if ((channelName in sync.channels) && sync.api) {
+		if ((channelName in sync.channels) && sync.socket) {
 			var channel = getOrCreateChannel(channelName);
 			if (event && callback) {
 				channel.unbind(event, callback);
@@ -400,11 +395,11 @@
 	*/
 	function getOrCreateChannel(name) {
 		if (name === 'connection') {
-			return sync.api.connection;
+			return sync.socket.connection;
 		} else if (name in sync.channels) {
 			return sync.channels[name];
 		} else {
-			return sync.channels[name] = sync.api.subscribe(name);
+			return sync.channels[name] = sync.socket.subscribe(name);
 		}
 	}
 
@@ -438,14 +433,16 @@
 	}
 
 	/**
-	* Reloads the current slide and step based
-	* off of the state of the URL hash
+	* Bootstraps the tacion client over jQuery mobile's default
+	* handlers
 	*/
-	function reload() {
+	function bootstrap() {
+		// figure out what slide we're on (from the URL)
 		var current = urlState(location);
-		change(current.step, current.slide, {
-			transition: 'fade'
-		});
+		// intercept jQuery mobile's default change handler
+		elements.document.on('pagebeforechange', onChange);
+		// finally, force the correct slide to load
+		change(current.step, current.slide);
 	}
 
 	/**
@@ -506,18 +503,48 @@
 	* @param {Object} data A configuration object for the event
 	*/
 	function onChange(event, data) {
-		// if the location is a string, then a new slide was requested.
-		// if the location is not a string, then it is the content we
-		// generated for the slide.
+		// figure out where jQuery mobile wants us to go...
 		var location = data.toPage;
+		
+		// tacion will handle any page changes to a new URL (a string)
 		if ($.type(location) === 'string') {
-			// load content for whatever slide is selected in the request
+			
+			// extract the new state from the URL
 			var current = urlState(location);
+			
+			// use the new slide state to load it's content 
 			update(current.slide, current.step, data);
-			// this will subvert the default jQuery mobile logic, and
-			// allow us to generate our own content in the update call
+			
+			// finally, prevent jQuery mobile from handling this request.
 			event.preventDefault();
 		}
+	}
+
+	/**
+	* Creates an object used for transitioning between slides and steps
+	* @param {Number} slide The slide to show
+	* @param {Number} step The step in the slide to transition to
+	* @param {Object} data A default map of transition data	
+	* @return {Object} The final map of transition data
+	*/
+	function transitionOptions(slide, step, data) {
+		
+		// create a list of required options
+		var required = {
+			dataUrl: data.toPage,			
+			allowSamePageTransition: true,
+			reverse: slide < presentation.slide,
+			isNewSlide: presentation.slide !== slide
+		};
+
+		// create a list of optional options
+		var optional = {
+			transition: required.isNewSlide ? 'fade' : 'none'
+		};
+		
+		// generate the transition object
+		return $.extend(optional, data.options || {}, required);
+		
 	}
 
 	/**
@@ -527,62 +554,32 @@
 	* @param {Object} data A map of transition data
 	*/
 	function update(slide, step, data) {
-
 		spinner('loading slide');
 
-		// drivers sync state with passengers on update
+		// create some jQuery mobile "transition" options
+		var options = transitionOptions(slide, step, data);
+
+		// get the requested slide page (the jQuery object!)
+		getSlide(slide).then(function(page){
+			// reset scroll before switching to new slides
+			if (options.isNewSlide) { scrollTo(0, 0); }
+
+			// show the current slide and move to the correct step
+			mobile.changePage(page, options);
+			gotoStep(step, page);
+
+			// finally, mark the internal state as changed
+			trigger('update', {
+				page: page,
+				slide: presentation.slide = slide,
+				step: presentation.step = step
+			});
+		});
+		
+		// ensure that any passengers are kept in sync!
 		if (sync.role === 'driver') {
 			syncState({ slide: slide, step: step });
 		}
-
-		// create a list of required options
-		var required = {
-			dataUrl: data.toPage,
-			allowSamePageTransition: true,
-			reverse: slide < presentation.slide
-		};
-
-		// create a list of optional options
-		var newSlide = presentation.slide !== slide;
-		var optional = {
-			transition: newSlide ? 'fade' : 'none'
-		};
-
-		// set the slide state for this user
-		presentation.slide = slide;
-		presentation.step = step;
-
-		// get the requested slide
-		getSlide(slide).then(function(page){
-
-			// the default transition is "slide" but pages can provide their
-			// own defaults
-			if (page.data('transition')) {
-				optional.transition = page.data('transition');
-			}
-
-			// reset scroll before switching to new slides
-			if (newSlide) { scrollTo(0, 0); }
-
-			// instruct jQuery mobile to show the current slide
-			var requested = data.options || {};
-			var options = $.extend(optional, requested, required);
-			mobile.changePage(page, options);
-
-			// display the correct step to the user
-			gotoStep(step, page);
-
-			// and inform the API that the slide has been updated
-			trigger('update', {
-				page: page,
-				slide: presentation.slide,
-				step: presentation.step
-			});
-
-		}).fail(function(index){
-			alert('Unable to find slide #' + index);
-		});
-
 	}
 
 	/**
@@ -592,8 +589,7 @@
 	* @return {jQuery.Deferred} An async job that can be used to fetch the slide page
 	*/
 	function getSlide(slide) {
-
-		var loader = presentation.slides[slide];
+		var loader = presentation.slides ? presentation.slides[slide] : undefined;
 
 		// if the slide index does not exist, error out
 		if (loader === undefined) {
@@ -602,41 +598,42 @@
 			// if the slide index is a path, we should convert it
 			// to an async loader for the slide
 			if (!loader.then) {
-				loader = presentation.slides[slide] = loadSlide(loader);
+				loader = presentation.slides[slide] = loadSlide(slide, loader);
 			}
 			// finally, return the loader interface
 			return loader.promise();
 		}
-
 	}
 
 	/**
 	* Loads a slide from the server and returns a job that can be used to
 	* access the slide page
+	* @param {Number} slide The slide index to load
 	* @param {String} path The path to the slide content file
 	* @return {jQuery.Deferred} An async job that can be used to fetch the slide page
 	*/
-	function loadSlide(path) {
+	function loadSlide(slide, path) {
 		var afterRender = $.Deferred();
 		loadFile(path).then(function(html) {
-			renderSlide(html).then(afterRender.resolve);
+			renderSlide(slide, html).then(afterRender.resolve);
 		});
 		return afterRender.promise();
 	}
 
 	/**
 	* Takes raw html content for a slide, and returns a job that can be used to access
-	* the final rendered slide page
+	* the final rendered slide page	
+	* @param {Number} slide The slide index to render
 	* @param {String} html The raw html of the slide content
 	* @return {jQuery.Deferred} An async job that can be used to fetch the slide page
 	*/
-	function renderSlide(html) {
+	function renderSlide(slide, html) {
 
 		// used to track the render job
 		var job = $.Deferred();
 
 		// interpolates the slide content into the template
-		var slide = applySlideTemplate(html);
+		var slide = applySlideTemplate(slide, html);
 
 		// parse the slide content for shared elements
 		var content     = slide.find('[data-role=content]');
@@ -644,7 +641,7 @@
 		var assets      = slide.find('link[href]').remove();
 		var steps       = slide.find('[data-step]');
 		var alternators = slide.find('[data-sync-theme]');
-		var contentId   = content.attr('id') || presentation.slide;
+		var contentId   = content.attr('id');
 
 		// the whole page might actually be a step
 		// (if the content defines a page step)
@@ -731,10 +728,11 @@
 
 	/**
 	* Interpolates slide content into a template. Also fills in declared constants
+	* @param {Number} slide The slide index to retrieve
 	* @param content The content to interpolate
 	* @return {jQuery} The rendered jQuery element
 	*/
-	function applySlideTemplate(content) {
+	function applySlideTemplate(slide, content) {
 		var pattern = /\{\{([a-z]+)\}\}/g;
 		var template = presentation.template;
 
@@ -744,7 +742,7 @@
 			if (key === 'content') {
 				return content;
 			} else if (key === 'index') {
-				return presentation.slide + 1;
+				return slide + 1;
 			} else if (key === 'count') {
 				return presentation.slideCount;
 			}
@@ -918,7 +916,7 @@
 	}
 
 	// Expose the public API
-	global.tacion = {
+	global.tacion = {  // i.e. window.tacion
 		alert:   alert,
 		change:  change,
 		next:    next,

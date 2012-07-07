@@ -27,6 +27,10 @@ a {
 	@include transition-duration(1s);
 }
 
+[data-role=page] {
+	text-align: center;
+}
+
 .alert {
 	@include transition(top 500ms);
 	@include box-sizing(border-box);
@@ -48,6 +52,7 @@ a {
 }
 
 pre {
+	text-align: left;
 	white-space: pre-wrap;
 	font-size: 1.2em;
 	font-weight: bold;
