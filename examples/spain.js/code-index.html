@@ -1,10 +1,29 @@
 <div id="code-index" data-role="content">
-	<h1>Getting Started</h1>
-	<pre data-step="1" class="step opacity"><code
-		data-language="javascript"
-		data-unindent="2"
-		data-file="index.html"
-		data-start="yepnope\(\[\{"
-		data-end="\}\]\);"
-   ></code></pre>
+	<h1>For starters, don't re-invent the wheel</h1>
+	<pre><code class="html">	
+&lt;!--- yepnope.js (a custom requirement, for now...) --->
+&lt;script src="libs/yepnope.custom.min.js">&lt;/script>
+
+&lt;script>
+yepnope([{
+  load: [
+    // load jQuery mobile dependencies
+    '//code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.css',
+    '//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js',
+    '//code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.js',
+      
+    // add this for syncing support (more on this later)
+    '//js.pusher.com/1.11/pusher.min.js'
+      
+    // load tacion's client files
+    'src/client/tacion.css',
+    'src/client/tacion.js'
+  ],
+  complete: function() { 
+    // finally, start the presentation
+    tacion.start('my_presentation'); 
+  }
+});
+&lt;/script>
+	</code></pre>
 </div>

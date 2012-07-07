@@ -4,28 +4,29 @@
 #reach {
 	overflow: hidden;
 	.image {
-		position: relative;
+		position: absolute;
 		background: none top left no-repeat scroll transparent;
 		&.active {
-			 @include transition(left 1s);
+			 @include transition(left 1s, right 1s);
 		}
 		&.jquery-logo {
-			left: -250px;
-			width: 235px;
+			$width: 235px;
+			width: $width;
+			margin-left: -($width/2);
+			left: -200%;
 			height: 61px;
 			background-image: url('../img/jquery-mobile-logo.png');
-			&.active {
-				left: 1em;
-			}
+			&.active { left: 50%; }
 		}
 		&.mobile-phones {
-			left: -260px;
-			width: 240px;
+			$width: 240px;
+			margin-right: -($width/2);
+			margin-top: 76px;
+			right: -200%;
+			width: $width;
 			height: 289px;
 			background-image: url('../img/mobile-phones.png');
-			&.active {
-				left: 1em;
-			}
+			&.active { right: 50%; }
 		}
 	}
 }

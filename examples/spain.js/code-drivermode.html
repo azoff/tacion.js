@@ -1,25 +1,10 @@
 <div id="code-drivermode" data-role="content">
 	<h1>Driving the presentation</h1>
-	<ul>
-		<li class="step opacity" data-step="1">Assuming the client connects to a server, tacion switches to driver mode</li>
-		<li class="step opacity" data-step="2">Driver mode does not listen to the sync channel, but sends messages to it instead:</li>
-	</ul>
-	<pre class="step opacity" data-step="2"><code
-		data-language="javascript"
+	<pre class="step opacity" data-step="1"><code
+		class="javascript"
 		data-unindent="1"
 		data-file="../../src/client/tacion.js"
 		data-start="function driverMode\("
-		data-end="\n\t\}"
-	></code></pre>
-	<ul>
-		<li class="step opacity" data-step="3">Messages are sent to the sync channel via
-			<a href="https://github.com/azoff/tacion.js/blob/master/src/server/tacion.js">the server</a>:</li>
-	</ul>
-	<pre class="step opacity" data-step="3"><code
-		data-language="javascript"
-		data-unindent="1"
-		data-file="../../src/client/tacion.js"
-		data-start="function sendSocketData\("
 		data-end="\n\t\}"
 	></code></pre>
 </div>

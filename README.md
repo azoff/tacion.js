@@ -29,14 +29,14 @@ In order to get started with tacion, the implementor must include it's dependenc
 
 <!--- Add near the bottom of <body> --->
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-<script src-"//code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.js"></script>
+<script src="//code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.js"></script>
 ```
 
 That should take care of loading jQuery Mobile. The only other external dependency is [yepnope](http://yepnopejs.com), a conditional script loader that tacion will use to load the JavaScript and CSS for each slide. If you use [Modernizr](http://modernizr.com), chances are that you are already including it. Unfortunately, yepnope is no longer packaged with a CSS loader by default - so you will have to either include [the plugin](http://github.com/SlexAxton/yepnope.js/blob/master/plugins/yepnope.css.js) yourself, or just include tacion's [custom build of yepnope](http://github.com/azoff/tacion.js/blob/master/libs/yepnope.custom.min.js):
 
 ```html
 <!--- Using tacion's custom build of yepnope --->
-<script src-"libs/yepnope.custom.min.js"></script>
+<script src="libs/yepnope.custom.min.js"></script>
 ```
 
 Finally, you are free to include tacion and start your presentation:
@@ -47,7 +47,7 @@ Finally, you are free to include tacion and start your presentation:
 <link rel="stylesheet" href="src/client/tacion.css">
 
 <!--- The tacion client is also in the same folder --->
-<script src-"src/client/tacion.min.js"></script>
+<script src="src/client/tacion.min.js"></script>
 
 <!-- Assuming your presentation is in the 'my_presentation' folder --->
 <script>

@@ -27,7 +27,6 @@
 			var start = code.data('start');
 			var end = code.data('end');
 			var unindent = parseInt(code.data('unindent')||0, 10);
-			var header = '// ' + basename;
 			var length;
 			if (start) {
 				start = indexOf(text, start);
@@ -42,21 +41,17 @@
 			if (end > start) {
 				length += end - start;
 			}
-			text = text.substr(start, length);
+			text = text.substr(start, length).replace(/\n$/, '');
 			if (unindent > 0) {
 				while (unindent--) {
 					text = text.replace(/\t(\t*)/g, '$1');
 				}
 			}
-			text = header + '\n\n' + text.replace(/\t/g, '   ');
-			code.text(text);
-			setTimeout(function(){
-				highlighter.color(code);
-			}, 250);
+			highlighter.highlightBlock(code.text(text).get(0), '   ');
 		};
 	}
 
-	function checkLoadFile(i, element) {
+	function toSnippet(i, element) {
 		var code = $(element);
 		var file = code.data('file');
 		if (file) {
@@ -64,22 +59,23 @@
 			code.text('Loading ' + basename + '...');
 			return loadFile(file).then(parseCode(code, basename));
 		} else {
-			highlighter.color(code);
+			highlighter.highlightBlock(code.get(0));
 			return undefined;
 		}
 	}
 
 	function checkForCode(event, data) {
-		var code = data.page.find('code:not(.rainbow)');
+		var code = data.page.find('code:not(.highlighted)');
 		if (code.size()) {
 			tacion.spinner('loading code...');
-			var jobs = $.makeArray(code.map(checkLoadFile));
+			var jobs = $.makeArray(code.map(toSnippet));
 			$.when.apply($, jobs).then(function(){
 				tacion.spinner(false);
+				code.addClass('highlighted');
 			});
 		}
 	}
 
 	tacion.on('update', checkForCode);
 
-})(tacion, Rainbow);
+})(tacion, hljs);

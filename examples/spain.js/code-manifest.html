@@ -1,0 +1,26 @@
+<div id="code-manifest" data-role="content">
+	<h1>Manifest Wat?!?</h1>
+	<pre data-step="1" class="step opacity"><code class="javascript">// manifest.json
+
+{		
+
+  // currently, the only safe way to "sync" is with a server...
+  "server": "http://127.0.0.1:1337",
+
+  // the server might need an API key...
+  "api_key": "horialovesjquerymobile"
+
+  // common slide elements should probably go in a template
+  "template": "page.html",
+
+  // browsers don't have server file-system access, so
+  // we manually need to define our slides
+  "slides": [
+    "relative/path/to/slide_1.html",
+    "relative/path/to/slide_two.html",
+    // ...
+    "relative/path/to/my_last_slide.html"
+  ]
+
+}</code></pre>
+</div>
