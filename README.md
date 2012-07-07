@@ -280,13 +280,9 @@ tacion.start('/my_presentation');
 
 On the horizon
 --------------
-- Create a video backup (QuickTime, over airplay on iPad)
-- Interpolate a system diagram
+- Add interface for loader
+- Vanity URLs
 - Figure out CI for client code
 - Add npm packaging?
-- Upgrade Errorception
-  - https://mail.google.com/mail/?view=cm&fs=1&tf=1&source=mailto&to=rakeshpai@errorception.com
-- Upgrade pusher account
-- Upgrade webstorm
 - Add to site and cv
 - Improve landing site (tac.io?)
