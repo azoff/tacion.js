@@ -163,7 +163,7 @@
 		// and disable syncing across the presentation
 		if (state.current in errorMessages) {
 			setSyncing(false, false);
-			alert(errorMessages[event.current]);
+			alert(errorMessages[state.current]);
 
 		// otherwise, re-enable syncing and hide any alerts.
 		} else if (state.current === 'connected') {
